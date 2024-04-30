@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/hetznercloud/hcloud-go/v2/hcloud"
+
+	"github.com/apricote/hcloud-upload-image/util/contextlogger"
 )
 
 // From https://github.com/hetznercloud/terraform-provider-hcloud/blob/v1.46.1/internal/control/retry.go
@@ -57,6 +59,8 @@ func AbortRetry(err error) error {
 
 // Retry executes f at most maxTries times.
 func Retry(ctx context.Context, maxTries int, f func() error) error {
+	logger := contextlogger.From(ctx)
+
 	var err error
 
 	backoff := ExponentialBackoffWithLimit(2, 1*time.Second, 30*time.Second)
@@ -74,6 +78,7 @@ func Retry(ctx context.Context, maxTries int, f func() error) error {
 		}
 		if err != nil {
 			sleep := backoff(try)
+			logger.DebugContext(ctx, "operation failed, waiting before trying again", "try", try, "backoff", sleep)
 			time.Sleep(sleep)
 			continue
 		}

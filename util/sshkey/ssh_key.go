@@ -7,6 +7,8 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
+// From https://gitlab.com/hetznercloud/fleeting-plugin-hetzner/-/blob/0f60204582289c243599f8ca0f5be4822789131d/internal/utils/ssh_key.go
+
 func GenerateKeyPair() ([]byte, []byte, error) {
 	pub, priv, err := ed25519.GenerateKey(nil)
 	if err != nil {
