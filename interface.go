@@ -46,10 +46,10 @@ type UploadOptions struct {
 	DebugSkipResourceCleanup bool
 }
 
-type Compression int
+type Compression string
 
 const (
-	CompressionNone Compression = iota
-	CompressionBZ2
+	CompressionNone Compression = ""
+	CompressionBZ2  Compression = "bz2"
 	// zip,xz,zstd
 )
