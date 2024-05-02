@@ -2,7 +2,6 @@ package control
 
 import (
 	"context"
-	"errors"
 	"math"
 	"time"
 
@@ -30,33 +29,6 @@ func ExponentialBackoffWithLimit(b float64, d time.Duration, limit time.Duration
 	}
 }
 
-// DefaultRetries is a constant for the maximum number of retries we usually do.
-// However, callers of Retry are free to choose a different number.
-const DefaultRetries = 5
-
-type abortErr struct {
-	Err error
-}
-
-func (e abortErr) Error() string {
-	return e.Err.Error()
-}
-
-func (e abortErr) Unwrap() error {
-	return e.Err
-}
-
-// AbortRetry aborts any further attempts of retrying an operation.
-//
-// If err is passed Retry returns the passed error. If nil is passed, Retry
-// returns nil.
-func AbortRetry(err error) error {
-	if err == nil {
-		return nil
-	}
-	return abortErr{Err: err}
-}
-
 // Retry executes f at most maxTries times.
 func Retry(ctx context.Context, maxTries int, f func() error) error {
 	logger := contextlogger.From(ctx)
@@ -70,12 +42,7 @@ func Retry(ctx context.Context, maxTries int, f func() error) error {
 			return ctx.Err()
 		}
 
-		var aerr abortErr
-
 		err = f()
-		if errors.As(err, &aerr) {
-			return aerr.Err
-		}
 		if err != nil {
 			sleep := backoff(try)
 			logger.DebugContext(ctx, "operation failed, waiting before trying again", "try", try, "backoff", sleep)
