@@ -7,8 +7,8 @@ import (
 	"github.com/hetznercloud/hcloud-go/v2/hcloud"
 	"github.com/spf13/cobra"
 
-	hcloud_upload_image "github.com/apricote/hcloud-upload-image"
-	"github.com/apricote/hcloud-upload-image/contextlogger"
+	hcloud_upload_image "github.com/apricote/hcloud-upload-image/hcloudimages"
+	"github.com/apricote/hcloud-upload-image/hcloudimages/contextlogger"
 )
 
 const (

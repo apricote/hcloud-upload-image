@@ -1,4 +1,4 @@
-package hcloud_upload_image
+package hcloudimages
 
 import (
 	"context"
@@ -8,11 +8,11 @@ import (
 	"github.com/hetznercloud/hcloud-go/v2/hcloud"
 	"golang.org/x/crypto/ssh"
 
-	"github.com/apricote/hcloud-upload-image/contextlogger"
-	"github.com/apricote/hcloud-upload-image/control"
-	"github.com/apricote/hcloud-upload-image/randomid"
-	"github.com/apricote/hcloud-upload-image/sshkey"
-	"github.com/apricote/hcloud-upload-image/sshsession"
+	"github.com/apricote/hcloud-upload-image/hcloudimages/contextlogger"
+	"github.com/apricote/hcloud-upload-image/hcloudimages/internal/control"
+	"github.com/apricote/hcloud-upload-image/hcloudimages/internal/randomid"
+	"github.com/apricote/hcloud-upload-image/hcloudimages/internal/sshkey"
+	"github.com/apricote/hcloud-upload-image/hcloudimages/internal/sshsession"
 )
 
 const (
@@ -39,17 +39,17 @@ var (
 	defaultSSHDialTimeout = 1 * time.Minute
 )
 
-func New(client *hcloud.Client) SnapshotClient {
-	return &snapshotClient{
-		client: client,
+func New(c *hcloud.Client) Client {
+	return &client{
+		c: c,
 	}
 }
 
-type snapshotClient struct {
-	client *hcloud.Client
+type client struct {
+	c *hcloud.Client
 }
 
-func (s snapshotClient) Upload(ctx context.Context, options UploadOptions) (*hcloud.Image, error) {
+func (s client) Upload(ctx context.Context, options UploadOptions) (*hcloud.Image, error) {
 	logger := contextlogger.From(ctx).With(
 		"library", "hcloud-upload-image",
 		"method", "upload",
@@ -70,7 +70,7 @@ func (s snapshotClient) Upload(ctx context.Context, options UploadOptions) (*hcl
 		return nil, fmt.Errorf("failed to generate temporary ssh key pair: %w", err)
 	}
 
-	key, _, err := s.client.SSHKey.Create(ctx, hcloud.SSHKeyCreateOpts{
+	key, _, err := s.c.SSHKey.Create(ctx, hcloud.SSHKeyCreateOpts{
 		Name:      resourceName,
 		PublicKey: string(publicKey),
 		Labels:    fullLabels(options.Labels),
@@ -88,7 +88,7 @@ func (s snapshotClient) Upload(ctx context.Context, options UploadOptions) (*hcl
 
 		logger.InfoContext(ctx, "Cleanup: Deleting temporary ssh key")
 
-		_, err := s.client.SSHKey.Delete(ctx, key)
+		_, err := s.c.SSHKey.Delete(ctx, key)
 		if err != nil {
 			logger.WarnContext(ctx, "Cleanup: ssh key could not be deleted", "error", err)
 			// TODO
@@ -107,7 +107,7 @@ func (s snapshotClient) Upload(ctx context.Context, options UploadOptions) (*hcl
 		"location", defaultLocation.Name,
 		"serverType", serverType.Name,
 	)
-	serverCreateResult, _, err := s.client.Server.Create(ctx, hcloud.ServerCreateOpts{
+	serverCreateResult, _, err := s.c.Server.Create(ctx, hcloud.ServerCreateOpts{
 		Name:       resourceName,
 		ServerType: serverType,
 
@@ -128,7 +128,7 @@ func (s snapshotClient) Upload(ctx context.Context, options UploadOptions) (*hcl
 	logger.DebugContext(ctx, "Created Server")
 
 	logger.DebugContext(ctx, "waiting on actions")
-	err = s.client.Action.WaitFor(ctx, append(serverCreateResult.NextActions, serverCreateResult.Action)...)
+	err = s.c.Action.WaitFor(ctx, append(serverCreateResult.NextActions, serverCreateResult.Action)...)
 	if err != nil {
 		return nil, fmt.Errorf("creating the temporary server failed: %w", err)
 	}
@@ -144,7 +144,7 @@ func (s snapshotClient) Upload(ctx context.Context, options UploadOptions) (*hcl
 
 		logger.InfoContext(ctx, "Cleanup: Deleting temporary server")
 
-		_, _, err := s.client.Server.DeleteWithResult(ctx, server)
+		_, _, err := s.c.Server.DeleteWithResult(ctx, server)
 		if err != nil {
 			logger.WarnContext(ctx, "Cleanup: server could not be deleted", "error", err)
 		}
@@ -152,7 +152,7 @@ func (s snapshotClient) Upload(ctx context.Context, options UploadOptions) (*hcl
 
 	// 3. Activate Rescue System
 	logger.InfoContext(ctx, "# Step 4: Activating Rescue System")
-	enableRescueResult, _, err := s.client.Server.EnableRescue(ctx, server, hcloud.ServerEnableRescueOpts{
+	enableRescueResult, _, err := s.c.Server.EnableRescue(ctx, server, hcloud.ServerEnableRescueOpts{
 		Type:    defaultRescueType,
 		SSHKeys: []*hcloud.SSHKey{key},
 	})
@@ -162,7 +162,7 @@ func (s snapshotClient) Upload(ctx context.Context, options UploadOptions) (*hcl
 
 	logger.DebugContext(ctx, "rescue system requested, waiting on action")
 
-	err = s.client.Action.WaitFor(ctx, enableRescueResult.Action)
+	err = s.c.Action.WaitFor(ctx, enableRescueResult.Action)
 	if err != nil {
 		return nil, fmt.Errorf("enabling the rescue system on the temporary server failed: %w", err)
 	}
@@ -170,14 +170,14 @@ func (s snapshotClient) Upload(ctx context.Context, options UploadOptions) (*hcl
 
 	// 4. Boot Server
 	logger.InfoContext(ctx, "# Step 4: Booting Server")
-	powerOnAction, _, err := s.client.Server.Poweron(ctx, server)
+	powerOnAction, _, err := s.c.Server.Poweron(ctx, server)
 	if err != nil {
 		return nil, fmt.Errorf("starting the temporary server failed: %w", err)
 	}
 
 	logger.DebugContext(ctx, "boot requested, waiting on action")
 
-	err = s.client.Action.WaitFor(ctx, powerOnAction)
+	err = s.c.Action.WaitFor(ctx, powerOnAction)
 	if err != nil {
 		return nil, fmt.Errorf("starting the temporary server failed: %w", err)
 	}
@@ -250,7 +250,7 @@ func (s snapshotClient) Upload(ctx context.Context, options UploadOptions) (*hcl
 
 	// 8. Create Image from Server
 	logger.InfoContext(ctx, "# Step 8: Creating Image")
-	createImageResult, _, err := s.client.Server.CreateImage(ctx, server, &hcloud.ServerCreateImageOpts{
+	createImageResult, _, err := s.c.Server.CreateImage(ctx, server, &hcloud.ServerCreateImageOpts{
 		Type:        hcloud.ImageTypeSnapshot,
 		Description: options.Description,
 		Labels:      fullLabels(options.Labels),
@@ -260,7 +260,7 @@ func (s snapshotClient) Upload(ctx context.Context, options UploadOptions) (*hcl
 	}
 	logger.DebugContext(ctx, "image creation requested, waiting on action")
 
-	err = s.client.Action.WaitFor(ctx, createImageResult.Action)
+	err = s.c.Action.WaitFor(ctx, createImageResult.Action)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create snapshot: %w", err)
 	}

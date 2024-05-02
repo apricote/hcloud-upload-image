@@ -1,4 +1,4 @@
-package hcloud_upload_image
+package hcloudimages
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"github.com/hetznercloud/hcloud-go/v2/hcloud"
 )
 
-type SnapshotClient interface {
+type Client interface {
 	// Upload the specified image into a snapshot on Hetzner Cloud.
 	//
 	// As the Hetzner Cloud API has no direct way to upload images, we create a temporary server,

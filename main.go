@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/apricote/hcloud-upload-image/cmd/hcloud-image/cmd"
-	"github.com/apricote/hcloud-upload-image/cmd/hcloud-image/ui"
+	"github.com/apricote/hcloud-upload-image/cmd/hcloud-image/internal/ui"
 )
 
 func init() {

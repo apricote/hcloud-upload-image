@@ -10,13 +10,13 @@ import (
 	"github.com/hetznercloud/hcloud-go/v2/hcloud"
 	"github.com/spf13/cobra"
 
-	hcloud_upload_image "github.com/apricote/hcloud-upload-image"
-	"github.com/apricote/hcloud-upload-image/contextlogger"
-	"github.com/apricote/hcloud-upload-image/control"
+	"github.com/apricote/hcloud-upload-image/hcloudimages"
+	"github.com/apricote/hcloud-upload-image/hcloudimages/backoff"
+	"github.com/apricote/hcloud-upload-image/hcloudimages/contextlogger"
 )
 
 // The pre-authenticated client. Set in the root command PersistentPreRun
-var client hcloud_upload_image.SnapshotClient
+var client hcloudimages.Client
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -44,7 +44,7 @@ to quickly create a Cobra application.`,
 	},
 }
 
-func newClient(ctx context.Context) hcloud_upload_image.SnapshotClient {
+func newClient(ctx context.Context) hcloudimages.Client {
 	logger := contextlogger.From(ctx)
 	// Build hcloud-go client
 	if os.Getenv("HCLOUD_TOKEN") == "" {
@@ -54,11 +54,11 @@ func newClient(ctx context.Context) hcloud_upload_image.SnapshotClient {
 	hcloudClient := hcloud.NewClient(
 		hcloud.WithToken(os.Getenv("HCLOUD_TOKEN")),
 		hcloud.WithApplication("hcloud-image", ""),
-		hcloud.WithPollBackoffFunc(control.ExponentialBackoffWithLimit(2, 1*time.Second, 30*time.Second)),
+		hcloud.WithPollBackoffFunc(backoff.ExponentialBackoffWithLimit(2, 1*time.Second, 30*time.Second)),
 		// hcloud.WithDebugWriter(os.Stderr),
 	)
 
-	return hcloud_upload_image.New(hcloudClient)
+	return hcloudimages.New(hcloudClient)
 }
 
 func Execute() {
