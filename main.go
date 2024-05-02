@@ -4,8 +4,8 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/apricote/hcloud-upload-image/cmd/hcloud-image/cmd"
-	"github.com/apricote/hcloud-upload-image/cmd/hcloud-image/internal/ui"
+	"github.com/apricote/hcloud-upload-image/cmd"
+	"github.com/apricote/hcloud-upload-image/internal/ui"
 )
 
 func init() {

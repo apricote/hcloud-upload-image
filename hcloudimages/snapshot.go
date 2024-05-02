@@ -39,7 +39,7 @@ var (
 	defaultSSHDialTimeout = 1 * time.Minute
 )
 
-func New(c *hcloud.Client) Client {
+func NewClient(c *hcloud.Client) Client {
 	return &client{
 		c: c,
 	}

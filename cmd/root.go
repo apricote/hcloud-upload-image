@@ -20,17 +20,9 @@ var client hcloudimages.Client
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "hcloud-image",
-	Short: "A brief description of your application",
-	Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	// Run: func(cmd *cobra.Command, args []string) { },
+	Use:          "hcloud-upload-image",
+	Long:         `Manage custom OS images on Hetzner Cloud.`,
+	SilenceUsage: true,
 
 	PersistentPreRun: func(cmd *cobra.Command, _ []string) {
 		ctx := cmd.Context()
@@ -51,14 +43,18 @@ func newClient(ctx context.Context) hcloudimages.Client {
 		logger.ErrorContext(ctx, "You need to set the HCLOUD_TOKEN environment variable to your Hetzner Cloud API Token.")
 		os.Exit(1)
 	}
-	hcloudClient := hcloud.NewClient(
+
+	opts := []hcloud.ClientOption{
 		hcloud.WithToken(os.Getenv("HCLOUD_TOKEN")),
 		hcloud.WithApplication("hcloud-image", ""),
 		hcloud.WithPollBackoffFunc(backoff.ExponentialBackoffWithLimit(2, 1*time.Second, 30*time.Second)),
-		// hcloud.WithDebugWriter(os.Stderr),
-	)
+	}
 
-	return hcloudimages.New(hcloudClient)
+	if os.Getenv("HCLOUD_DEBUG") != "" {
+		opts = append(opts, hcloud.WithDebugWriter(os.Stderr))
+	}
+
+	return hcloudimages.NewClient(hcloud.NewClient(opts...))
 }
 
 func Execute() {
