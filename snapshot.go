@@ -8,11 +8,11 @@ import (
 	"github.com/hetznercloud/hcloud-go/v2/hcloud"
 	"golang.org/x/crypto/ssh"
 
-	"github.com/apricote/hcloud-upload-image/util/contextlogger"
-	"github.com/apricote/hcloud-upload-image/util/control"
-	"github.com/apricote/hcloud-upload-image/util/randomid"
-	"github.com/apricote/hcloud-upload-image/util/sshkey"
-	"github.com/apricote/hcloud-upload-image/util/sshsession"
+	"github.com/apricote/hcloud-upload-image/contextlogger"
+	"github.com/apricote/hcloud-upload-image/control"
+	"github.com/apricote/hcloud-upload-image/randomid"
+	"github.com/apricote/hcloud-upload-image/sshkey"
+	"github.com/apricote/hcloud-upload-image/sshsession"
 )
 
 const (

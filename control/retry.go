@@ -7,7 +7,7 @@ import (
 
 	"github.com/hetznercloud/hcloud-go/v2/hcloud"
 
-	"github.com/apricote/hcloud-upload-image/util/contextlogger"
+	"github.com/apricote/hcloud-upload-image/contextlogger"
 )
 
 // From https://github.com/hetznercloud/terraform-provider-hcloud/blob/v1.46.1/internal/control/retry.go

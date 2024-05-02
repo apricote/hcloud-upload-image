@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 
 	hcloud_upload_image "github.com/apricote/hcloud-upload-image"
-	"github.com/apricote/hcloud-upload-image/util/contextlogger"
+	"github.com/apricote/hcloud-upload-image/contextlogger"
 )
 
 const (

@@ -11,8 +11,8 @@ import (
 	"github.com/spf13/cobra"
 
 	hcloud_upload_image "github.com/apricote/hcloud-upload-image"
-	"github.com/apricote/hcloud-upload-image/util/contextlogger"
-	"github.com/apricote/hcloud-upload-image/util/control"
+	"github.com/apricote/hcloud-upload-image/contextlogger"
+	"github.com/apricote/hcloud-upload-image/control"
 )
 
 // The pre-authenticated client. Set in the root command PersistentPreRun
