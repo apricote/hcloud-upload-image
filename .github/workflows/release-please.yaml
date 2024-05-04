@@ -1,0 +1,18 @@
+name: release-please
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  release-please:
+    # Do not run on forks.
+    if: github.repository == 'apricote/hcloud-upload-image'
+
+    runs-on: ubuntu-latest
+    steps:
+      - uses: google-github-actions/release-please-action@v4
+        with:
+          token: ${{ secrets.RELEASE_PLEASE_GH_TOKEN }}
+          config-file: .github/release-please-config.json
+          manifest-file: .github/release-please-manifest.json

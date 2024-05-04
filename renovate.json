@@ -1,0 +1,23 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":semanticCommits",
+    ":semanticCommitTypeAll(chore)",
+    ":semanticCommitScope(deps)",
+    ":enableVulnerabilityAlerts"
+  ],
+  "postUpdateOptions": [
+    "gomodTidy",
+    "gomodUpdateImportPaths"
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "fileMatch": ["^\\.github\\/(?:workflows|actions)\\/.+\\.ya?ml$"],
+      "matchStrings": [
+        "(?:version|VERSION): (?<currentValue>.+) # renovate: datasource=(?<datasource>[a-z-]+) depName=(?<depName>.+)(?: lookupName=(?<lookupName>.+))?(?: versioning=(?<versioning>[a-z-]+))?"
+      ]
+    }
+  ]
+}
