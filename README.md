@@ -107,6 +107,13 @@ func main() {
 }
 ```
 
+## Contributing
+
+If you have any questions, feedback or ideas, feel free to open an issue or pull request.
+
+## License
+
+This project is licensed under the MIT license, unless the file explicitly specifies another license.
 
 ## Support Disclaimer
 
