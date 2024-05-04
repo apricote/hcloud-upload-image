@@ -1,0 +1,67 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Run golangci-lint (CLI)
+        uses: golangci/golangci-lint-action@v5
+        with:
+          version: v1.57.2 # renovate: datasource=github-releases depName=golangci/golangci-lint
+          args: --timeout 5m
+
+      - name: Run golangci-lint (Lib)
+        uses: golangci/golangci-lint-action@v5
+        with:
+          version: v1.57.2 # renovate: datasource=github-releases depName=golangci/golangci-lint
+          args: --timeout 5m
+          working-directory: hcloudimages
+
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Run tests
+        run: go test -v -race -coverpkg=./...,./hcloudimages/...  ./... ./hcloudimages/...
+
+
+  go-mod-tidy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Run go mod tidy
+        run: go mod tidy
+
+      - name: Check uncommitted changes
+        run: git diff --exit-code
+
+      - if: failure()
+        run: echo "::error::Check failed, please run 'go mod tidy' and commit the changes."
