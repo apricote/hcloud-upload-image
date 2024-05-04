@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: MPL-2.0
+// From https://github.com/hetznercloud/terraform-provider-hcloud/blob/v1.46.1/internal/control/retry.go
+// Copyright (c) Hetzner Cloud GmbH
+
 package control
 
 import (
@@ -7,9 +11,6 @@ import (
 	"github.com/apricote/hcloud-upload-image/hcloudimages/backoff"
 	"github.com/apricote/hcloud-upload-image/hcloudimages/contextlogger"
 )
-
-// From https://github.com/hetznercloud/terraform-provider-hcloud/blob/v1.46.1/internal/control/retry.go
-// Copyright (c) Hetzner Cloud GmbH
 
 // Retry executes f at most maxTries times.
 func Retry(ctx context.Context, maxTries int, f func() error) error {

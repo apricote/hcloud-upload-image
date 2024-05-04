@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: MIT
+// From https://gitlab.com/hetznercloud/fleeting-plugin-hetzner/-/blob/0f60204582289c243599f8ca0f5be4822789131d/internal/utils/random.go
+// Copyright (c) 2024 Hetzner Cloud GmbH
+
 package randomid
 
 import (
@@ -5,9 +9,6 @@ import (
 	"encoding/hex"
 	"fmt"
 )
-
-// From https://gitlab.com/hetznercloud/fleeting-plugin-hetzner/-/blob/0f60204582289c243599f8ca0f5be4822789131d/internal/utils/random.go
-// Copyright (c) 2024 Hetzner Cloud GmbH
 
 func Generate() (string, error) {
 	b := make([]byte, 4)

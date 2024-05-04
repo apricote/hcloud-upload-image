@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: MIT
+// From https://gitlab.com/hetznercloud/fleeting-plugin-hetzner/-/blob/0f60204582289c243599f8ca0f5be4822789131d/internal/utils/random_test.go
+// Copyright (c) 2024 Hetzner Cloud GmbH
+
 package randomid
 
 import (
