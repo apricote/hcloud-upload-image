@@ -25,6 +25,7 @@ var uploadCmd = &cobra.Command{
 	Short: "Upload the specified disk image into your Hetzner Cloud project.",
 	Long: `This command implements a fake "upload", by going through a real server and snapshots.
 This does cost a bit of money for the server.`,
+	GroupID: "primary",
 
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := cmd.Context()

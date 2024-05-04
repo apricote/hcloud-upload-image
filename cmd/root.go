@@ -13,6 +13,7 @@ import (
 	"github.com/apricote/hcloud-upload-image/hcloudimages/backoff"
 	"github.com/apricote/hcloud-upload-image/hcloudimages/contextlogger"
 	"github.com/apricote/hcloud-upload-image/internal/ui"
+	"github.com/apricote/hcloud-upload-image/internal/version"
 )
 
 const (
@@ -33,6 +34,8 @@ var rootCmd = &cobra.Command{
 	Use:          "hcloud-upload-image",
 	Long:         `Manage custom OS images on Hetzner Cloud.`,
 	SilenceUsage: true,
+
+	Version: version.Version,
 
 	PersistentPreRun: func(cmd *cobra.Command, _ []string) {
 		ctx := cmd.Context()
@@ -100,4 +103,9 @@ func init() {
 	rootCmd.SetErrPrefix("\033[1;31mError:")
 
 	rootCmd.PersistentFlags().CountVarP(&verbose, flagVerbose, "v", "verbose debug output, can be specified up to 2 times")
+
+	rootCmd.AddGroup(&cobra.Group{
+		ID:    "primary",
+		Title: "Primary Commands:",
+	})
 }
