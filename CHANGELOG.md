@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/apricote/hcloud-upload-image/compare/v0.1.0...v0.1.1) (2024-05-04)
+
+
+### Bug Fixes
+
+* CLI does not produce release binaries ([#3](https://github.com/apricote/hcloud-upload-image/issues/3)) ([f373d4c](https://github.com/apricote/hcloud-upload-image/commit/f373d4c2baca9ccc892e6b6abff6dd217f2fdbeb))
+
 ## [0.1.0](https://github.com/apricote/hcloud-upload-image/compare/v0.0.1...v0.1.0) (2024-05-04)
 
 
