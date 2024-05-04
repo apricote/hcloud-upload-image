@@ -37,13 +37,7 @@ var rootCmd = &cobra.Command{
 	PersistentPreRun: func(cmd *cobra.Command, _ []string) {
 		ctx := cmd.Context()
 
-		logLevel := slog.LevelInfo
-		if verbose >= 1 {
-			logLevel = slog.LevelDebug
-		}
-		slog.SetDefault(slog.New(ui.NewHandler(os.Stdout, &ui.HandlerOptions{
-			Level: logLevel,
-		})))
+		slog.SetDefault(initLogger())
 
 		// Add logger to command context
 		logger := slog.Default()
@@ -52,6 +46,26 @@ var rootCmd = &cobra.Command{
 
 		client = newClient(ctx)
 	},
+}
+
+func initLogger() *slog.Logger {
+	logLevel := slog.LevelInfo
+	if verbose >= 1 {
+		logLevel = slog.LevelDebug
+	}
+
+	return slog.New(ui.NewHandler(os.Stdout, &ui.HandlerOptions{
+		Level: logLevel,
+		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
+			// Remove attributes that are unnecessary for the cli context
+			if a.Key == "library" || a.Key == "method" {
+				return slog.Attr{}
+			}
+
+			return a
+		},
+	}))
+
 }
 
 func newClient(ctx context.Context) *hcloudimages.Client {
