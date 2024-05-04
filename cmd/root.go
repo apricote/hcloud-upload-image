@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"os"
 	"time"
@@ -13,10 +12,21 @@ import (
 	"github.com/apricote/hcloud-upload-image/hcloudimages"
 	"github.com/apricote/hcloud-upload-image/hcloudimages/backoff"
 	"github.com/apricote/hcloud-upload-image/hcloudimages/contextlogger"
+	"github.com/apricote/hcloud-upload-image/internal/ui"
+)
+
+const (
+	flagVerbose = "verbose"
+)
+
+var (
+	// 1 activates slog debug output
+	// 2 activates hcloud-go debug output
+	verbose int
 )
 
 // The pre-authenticated client. Set in the root command PersistentPreRun
-var client hcloudimages.Client
+var client *hcloudimages.Client
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -27,6 +37,14 @@ var rootCmd = &cobra.Command{
 	PersistentPreRun: func(cmd *cobra.Command, _ []string) {
 		ctx := cmd.Context()
 
+		logLevel := slog.LevelInfo
+		if verbose >= 1 {
+			logLevel = slog.LevelDebug
+		}
+		slog.SetDefault(slog.New(ui.NewHandler(os.Stdout, &ui.HandlerOptions{
+			Level: logLevel,
+		})))
+
 		// Add logger to command context
 		logger := slog.Default()
 		ctx = contextlogger.New(ctx, logger)
@@ -36,7 +54,7 @@ var rootCmd = &cobra.Command{
 	},
 }
 
-func newClient(ctx context.Context) hcloudimages.Client {
+func newClient(ctx context.Context) *hcloudimages.Client {
 	logger := contextlogger.From(ctx)
 	// Build hcloud-go client
 	if os.Getenv("HCLOUD_TOKEN") == "" {
@@ -50,7 +68,7 @@ func newClient(ctx context.Context) hcloudimages.Client {
 		hcloud.WithPollBackoffFunc(backoff.ExponentialBackoffWithLimit(2, 1*time.Second, 30*time.Second)),
 	}
 
-	if os.Getenv("HCLOUD_DEBUG") != "" {
+	if os.Getenv("HCLOUD_DEBUG") != "" || verbose >= 2 {
 		opts = append(opts, hcloud.WithDebugWriter(os.Stderr))
 	}
 
@@ -66,7 +84,6 @@ func Execute() {
 
 func init() {
 	rootCmd.SetErrPrefix("\033[1;31mError:")
-	rootCmd.SetFlagErrorFunc(func(command *cobra.Command, err error) error {
-		return fmt.Errorf("fooo")
-	})
+
+	rootCmd.PersistentFlags().CountVarP(&verbose, flagVerbose, "v", "verbose debug output, can be specified up to 2 times")
 }

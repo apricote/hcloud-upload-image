@@ -7,7 +7,7 @@ import (
 	"github.com/hetznercloud/hcloud-go/v2/hcloud"
 	"github.com/spf13/cobra"
 
-	hcloud_upload_image "github.com/apricote/hcloud-upload-image/hcloudimages"
+	"github.com/apricote/hcloud-upload-image/hcloudimages"
 	"github.com/apricote/hcloud-upload-image/hcloudimages/contextlogger"
 )
 
@@ -41,9 +41,9 @@ This does cost a bit of money for the server.`,
 			return fmt.Errorf("unable to parse url from --%s=%q: %w", uploadFlagImageURL, imageURLString, err)
 		}
 
-		image, err := client.Upload(ctx, hcloud_upload_image.UploadOptions{
+		image, err := client.Upload(ctx, hcloudimages.UploadOptions{
 			ImageURL:         imageURL,
-			ImageCompression: hcloud_upload_image.Compression(imageCompression),
+			ImageCompression: hcloudimages.Compression(imageCompression),
 			Architecture:     hcloud.Architecture(architecture),
 			Description:      hcloud.Ptr(description),
 			Labels:           labels,
@@ -67,7 +67,7 @@ func init() {
 	uploadCmd.Flags().String(uploadFlagCompression, "", "Type of compression that was used on the disk image")
 	_ = uploadCmd.RegisterFlagCompletionFunc(
 		uploadFlagCompression,
-		cobra.FixedCompletions([]string{string(hcloud_upload_image.CompressionBZ2)}, cobra.ShellCompDirectiveNoFileComp),
+		cobra.FixedCompletions([]string{string(hcloudimages.CompressionBZ2)}, cobra.ShellCompDirectiveNoFileComp),
 	)
 
 	uploadCmd.Flags().String(uploadFlagArchitecture, "", "CPU Architecture of the disk image. Choices: x86|arm")

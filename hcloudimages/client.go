@@ -2,14 +2,19 @@ package hcloudimages
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"log/slog"
+	"net/url"
 	"time"
 
 	"github.com/hetznercloud/hcloud-go/v2/hcloud"
 	"golang.org/x/crypto/ssh"
 
 	"github.com/apricote/hcloud-upload-image/hcloudimages/contextlogger"
+	"github.com/apricote/hcloud-upload-image/hcloudimages/internal/actionutil"
 	"github.com/apricote/hcloud-upload-image/hcloudimages/internal/control"
+	"github.com/apricote/hcloud-upload-image/hcloudimages/internal/labelutil"
 	"github.com/apricote/hcloud-upload-image/hcloudimages/internal/randomid"
 	"github.com/apricote/hcloud-upload-image/hcloudimages/internal/sshkey"
 	"github.com/apricote/hcloud-upload-image/hcloudimages/internal/sshsession"
@@ -39,19 +44,69 @@ var (
 	defaultSSHDialTimeout = 1 * time.Minute
 )
 
-func NewClient(c *hcloud.Client) Client {
-	return &client{
+type UploadOptions struct {
+	// ImageURL must be publicly available. The instance will download the image from this endpoint.
+	ImageURL *url.URL
+	// ImageCompression describes the compression of the referenced image file. It defaults to [CompressionNone]. If
+	// set to anything else, the file will be decompressed before written to the disk.
+	ImageCompression Compression
+
+	// Possible future additions:
+	// ImageSignatureVerification
+	// ImageLocalPath
+	// ImageType (RawDiskImage, ISO, qcow2, ...)
+
+	// Architecture should match the architecture of the Image. This decides if the Snapshot can later be
+	// used with [hcloud.ArchitectureX86] or [hcloud.ArchitectureARM] servers.
+	//
+	// Internally this decides what server type is used for the temporary server.
+	Architecture hcloud.Architecture
+
+	// Description is an optional description that the resulting image (snapshot) will have. There is no way to
+	// select images by its description, you should use Labels if you need  to identify your image later.
+	Description *string
+
+	// Labels will be added to the resulting image (snapshot). Use these to filter the image list if you
+	// need to identify the image later on.
+	//
+	// We also always add a label `apricote.de/created-by=hcloud-image-upload` ([CreatedByLabel], [CreatedByValue]).
+	Labels map[string]string
+
+	// DebugSkipResourceCleanup will skip the cleanup of the temporary SSH Key and Server.
+	DebugSkipResourceCleanup bool
+}
+
+type Compression string
+
+const (
+	CompressionNone Compression = ""
+	CompressionBZ2  Compression = "bz2"
+
+	// Possible future additions:
+	// zip,xz,zstd
+)
+
+// NewClient instantiates a new client. It requires a working [*hcloud.Client] to interact with the Hetzner Cloud API.
+func NewClient(c *hcloud.Client) *Client {
+	return &Client{
 		c: c,
 	}
 }
 
-type client struct {
+type Client struct {
 	c *hcloud.Client
 }
 
-func (s client) Upload(ctx context.Context, options UploadOptions) (*hcloud.Image, error) {
+// Upload the specified image into a snapshot on Hetzner Cloud.
+//
+// As the Hetzner Cloud API has no direct way to upload images, we create a temporary server,
+// overwrite the root disk and take a snapshot of that disk instead.
+//
+// The temporary server costs money. If the upload fails, we might be unable to delete the server. Check out
+// CleanupTempResources for a helper in this case.
+func (s *Client) Upload(ctx context.Context, options UploadOptions) (*hcloud.Image, error) {
 	logger := contextlogger.From(ctx).With(
-		"library", "hcloud-upload-image",
+		"library", "hcloudimages",
 		"method", "upload",
 	)
 
@@ -62,6 +117,7 @@ func (s client) Upload(ctx context.Context, options UploadOptions) (*hcloud.Imag
 	logger = logger.With("run-id", id)
 	// For simplicity, we use the name random name for SSH Key + Server
 	resourceName := resourcePrefix + id
+	labels := labelutil.Merge(DefaultLabels, options.Labels)
 
 	// 1. Create SSH Key
 	logger.InfoContext(ctx, "# Step 1: Generating SSH Key")
@@ -73,7 +129,7 @@ func (s client) Upload(ctx context.Context, options UploadOptions) (*hcloud.Imag
 	key, _, err := s.c.SSHKey.Create(ctx, hcloud.SSHKeyCreateOpts{
 		Name:      resourceName,
 		PublicKey: string(publicKey),
-		Labels:    fullLabels(options.Labels),
+		Labels:    labels,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to submit temporary ssh key to API: %w", err)
@@ -119,7 +175,7 @@ func (s client) Upload(ctx context.Context, options UploadOptions) (*hcloud.Imag
 		// Image will never be booted, we only boot into rescue system
 		Image:    defaultImage,
 		Location: defaultLocation,
-		Labels:   fullLabels(options.Labels),
+		Labels:   labels,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("creating the temporary server failed: %w", err)
@@ -253,7 +309,7 @@ func (s client) Upload(ctx context.Context, options UploadOptions) (*hcloud.Imag
 	createImageResult, _, err := s.c.Server.CreateImage(ctx, server, &hcloud.ServerCreateImageOpts{
 		Type:        hcloud.ImageTypeSnapshot,
 		Description: options.Description,
-		Labels:      fullLabels(options.Labels),
+		Labels:      labels,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create snapshot: %w", err)
@@ -273,13 +329,124 @@ func (s client) Upload(ctx context.Context, options UploadOptions) (*hcloud.Imag
 	return image, nil
 }
 
-func fullLabels(userLabels map[string]string) map[string]string {
-	if userLabels == nil {
-		userLabels = make(map[string]string, len(DefaultLabels))
+// CleanupTempResources tries to delete any resources that were left over from previous calls to [Client.Upload].
+// Upload tries to clean up any temporary resources it created at runtime, but might fail at any point.
+// You can then use this command to make sure that all temporary resources are removed from your project.
+//
+// This method tries to delete any server or ssh keys that match the [DefaultLabels]
+func (s *Client) CleanupTempResources(ctx context.Context) error {
+	logger := contextlogger.From(ctx).With(
+		"library", "hcloudimages",
+		"method", "cleanup",
+	)
+
+	selector := labelutil.Selector(DefaultLabels)
+	logger = logger.With("selector", selector)
+
+	logger.InfoContext(ctx, "# Cleaning up Servers")
+	err := s.cleanupTempServers(ctx, logger, selector)
+	if err != nil {
+		return fmt.Errorf("failed to clean up all servers: %w", err)
 	}
-	for k, v := range DefaultLabels {
-		userLabels[k] = v
+	logger.DebugContext(ctx, "cleaned up all servers")
+
+	logger.InfoContext(ctx, "# Cleaning up SSH Keys")
+	err = s.cleanupTempSSHKeys(ctx, logger, selector)
+	if err != nil {
+		return fmt.Errorf("failed to clean up all ssh keys: %w", err)
+	}
+	logger.DebugContext(ctx, "cleaned up all ssh keys")
+
+	return nil
+}
+
+func (s *Client) cleanupTempServers(ctx context.Context, logger *slog.Logger, selector string) error {
+	servers, err := s.c.Server.AllWithOpts(ctx, hcloud.ServerListOpts{ListOpts: hcloud.ListOpts{
+		LabelSelector: selector,
+	}})
+	if err != nil {
+		return fmt.Errorf("failed to list servers: %w", err)
 	}
 
-	return userLabels
+	if len(servers) == 0 {
+		logger.InfoContext(ctx, "No servers found")
+		return nil
+	}
+	logger.InfoContext(ctx, "removing servers", "count", len(servers))
+
+	errs := []error{}
+	actions := make([]*hcloud.Action, 0, len(servers))
+
+	for _, server := range servers {
+		result, _, err := s.c.Server.DeleteWithResult(ctx, server)
+		if err != nil {
+			errs = append(errs, err)
+			logger.WarnContext(ctx, "failed to delete server", "server", server.ID, "error", err)
+			continue
+		}
+
+		actions = append(actions, result.Action)
+	}
+
+	successActions, errorActions, err := actionutil.Settle(ctx, &s.c.Action, actions...)
+	if err != nil {
+		return fmt.Errorf("failed to wait for server delete: %w", err)
+	}
+
+	if len(successActions) > 0 {
+		ids := make([]int64, 0, len(successActions))
+		for _, action := range successActions {
+			for _, resource := range action.Resources {
+				if resource.Type == hcloud.ActionResourceTypeServer {
+					ids = append(ids, resource.ID)
+				}
+			}
+		}
+
+		logger.InfoContext(ctx, "successfully deleted servers", "servers", ids)
+	}
+
+	if len(errorActions) > 0 {
+		for _, action := range errorActions {
+			errs = append(errs, action.Error())
+		}
+	}
+
+	if len(errs) > 0 {
+		// The returned message contains no info about the server IDs which failed
+		return fmt.Errorf("failed to delete some of the servers: %w", errors.Join(errs...))
+	}
+
+	return nil
+}
+
+func (s *Client) cleanupTempSSHKeys(ctx context.Context, logger *slog.Logger, selector string) error {
+	keys, _, err := s.c.SSHKey.List(ctx, hcloud.SSHKeyListOpts{ListOpts: hcloud.ListOpts{
+		LabelSelector: selector,
+	}})
+	if err != nil {
+		return fmt.Errorf("failed to list keys: %w", err)
+	}
+
+	if len(keys) == 0 {
+		logger.InfoContext(ctx, "No ssh keys found")
+		return nil
+	}
+
+	errs := []error{}
+	for _, key := range keys {
+		_, err := s.c.SSHKey.Delete(ctx, key)
+		if err != nil {
+			errs = append(errs, err)
+			logger.WarnContext(ctx, "failed to delete ssh key", "ssh-key", key.ID, "error", err)
+			continue
+		}
+	}
+
+	if len(errs) > 0 {
+		// The returned message contains no info about the server IDs which failed
+		return fmt.Errorf("failed to delete some of the ssh keys: %w", errors.Join(errs...))
+	}
+
+	return nil
 }

@@ -7,8 +7,8 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/google/go-cmp v0.6.0 h1:ofyhxvXcZhMsU5ulbFiLKl/XBFqE1GSq7atu8tAmTRI=
 github.com/google/go-cmp v0.6.0/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
-github.com/hetznercloud/hcloud-go/v2 v2.7.3-0.20240430130644-7bb1a7b9ae5f h1:c1ahn6OKXkSqwOfCoqyFrjVh14BEC9rD3ok0dehbCno=
-github.com/hetznercloud/hcloud-go/v2 v2.7.3-0.20240430130644-7bb1a7b9ae5f/go.mod h1:jvpP3qAWMIZ3WQwQLYa97ia6t98iPCgsJNwRts+Jnrk=
+github.com/hetznercloud/hcloud-go/v2 v2.7.3-0.20240503164107-1e3fa7033d8a h1:4L8VwfLGtlSBNPnsLINAqOEDde+vXi3AvZpTVtv+vs0=
+github.com/hetznercloud/hcloud-go/v2 v2.7.3-0.20240503164107-1e3fa7033d8a/go.mod h1:jvpP3qAWMIZ3WQwQLYa97ia6t98iPCgsJNwRts+Jnrk=
 github.com/inconshreveable/mousetrap v1.1.0 h1:wN+x4NVGpMsO7ErUn/mUI3vEoE6Jt13X2s0bqwp9tc8=
 github.com/inconshreveable/mousetrap v1.1.0/go.mod h1:vpF70FUmC8bwa3OWnCshd2FqLfsEA9PFc4w1p2J65bw=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
