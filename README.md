@@ -61,15 +61,15 @@ hcloud-upload-image cleanup --help
 
 ### Go Library
 
-The functionality to upload images is also exposed as a library! Check out the [reference documentation](https://pkg.go.dev/github.com/apricote/hcloud-upload-image/hcloudimages).
+The functionality to upload images is also exposed in the library `hcloudimages`! Check out the [reference documentation](https://pkg.go.dev/github.com/apricote/hcloud-upload-image/hcloudimages) for more details.
 
-To install:
+#### Install
 
 ```shell
-go get github.com/apricote/hcloud-upload-image
+go get github.com/apricote/hcloud-upload-image/hcloudimages
 ```
 
-Example Usage:
+#### Usages
 
 ```go
 package main
