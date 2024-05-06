@@ -4,7 +4,7 @@ go 1.22.2
 
 require (
 	github.com/apricote/hcloud-upload-image/hcloudimages v0.0.0
-	github.com/hetznercloud/hcloud-go/v2 v2.7.3-0.20240503164107-1e3fa7033d8a
+	github.com/hetznercloud/hcloud-go/v2 v2.8.0
 	github.com/spf13/cobra v1.8.0
 )
 
