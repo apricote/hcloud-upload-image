@@ -20,13 +20,13 @@ jobs:
       - name: Run golangci-lint (CLI)
         uses: golangci/golangci-lint-action@v6
         with:
-          version: v1.58.0 # renovate: datasource=github-releases depName=golangci/golangci-lint
+          version: v1.58.1 # renovate: datasource=github-releases depName=golangci/golangci-lint
           args: --timeout 5m
 
       - name: Run golangci-lint (Lib)
         uses: golangci/golangci-lint-action@v6
         with:
-          version: v1.58.0 # renovate: datasource=github-releases depName=golangci/golangci-lint
+          version: v1.58.1 # renovate: datasource=github-releases depName=golangci/golangci-lint
           args: --timeout 5m
           working-directory: hcloudimages
 
