@@ -86,9 +86,10 @@ type Compression string
 const (
 	CompressionNone Compression = ""
 	CompressionBZ2  Compression = "bz2"
+	CompressionXZ   Compression = "xz"
 
 	// Possible future additions:
-	// zip,xz,zstd
+	// zip,zstd
 )
 
 // NewClient instantiates a new client. It requires a working [*hcloud.Client] to interact with the Hetzner Cloud API.
@@ -290,6 +291,8 @@ func (s *Client) Upload(ctx context.Context, options UploadOptions) (*hcloud.Ima
 		switch options.ImageCompression {
 		case CompressionBZ2:
 			cmd += "bzip2 -cd | "
+		case CompressionXZ:
+			cmd += "xz -cd | "
 		default:
 			return nil, fmt.Errorf("unknown compression: %q", options.ImageCompression)
 		}
