@@ -2,16 +2,23 @@
 
 version: 1
 
+before:
+  hooks:
+    - ./scripts/completions.sh
+
 builds:
   - env:
       - CGO_ENABLED=0
-    ldflags:
-      - -X {{ .ModulePath }}/internal/version.version={{ .Version }}
-      - -X {{ .ModulePath }}/internal/version.versionPrerelease=
     goos:
       - linux
       - windows
       - darwin
+    mod_timestamp: "{{ .CommitTimestamp }}"
+    flags:
+      - -trimpath
+    ldflags:
+      - -X {{ .ModulePath }}/internal/version.version={{ .Version }}
+      - -X {{ .ModulePath }}/internal/version.versionPrerelease=
 
 archives:
   - format: tar.gz
@@ -27,6 +34,76 @@ archives:
     format_overrides:
       - goos: windows
         format: zip
+
+    files:
+      - README.md
+      - LICENSE
+      - completions/*
+
+nfpms:
+  - id: default
+    file_name_template: "{{ .ConventionalFileName }}"
+    package_name: hcloud-upload-image
+    vendor: Julian Tölle
+    homepage: https://github.com/apricote/hcloud-upload-image
+    maintainer: Julian Tölle <julian.toelle97@gmail.com>
+    formats:
+      - deb
+      - rpm
+      - apk
+    description: Manage custom OS images on Hetzner Cloud.
+    license: MIT
+    dependencies:
+      - openssh
+    recommends:
+      - hcloud-cli
+
+    contents:
+      - src: ./completions/hcloud-upload-image.bash
+        dst: /usr/share/bash-completion/completions/hcloud-upload-image
+        file_info:
+          mode: 0644
+      - src: ./completions/hcloud-upload-image.fish
+        dst: /usr/share/fish/vendor_completions.d/hcloud-upload-image.fish
+        file_info:
+          mode: 0644
+      - src: ./completions/hcloud-upload-image.zsh
+        dst: /usr/share/zsh/vendor-completions/_hcloud-upload-image
+        file_info:
+          mode: 0644
+      - src: ./LICENSE
+        dst: /usr/share/doc/hcloud-upload-image/license
+        file_info:
+          mode: 0644
+
+
+aurs:
+  - name: hcloud-upload-image-bin
+    homepage: "https://github.com/apricote/hcloud-upload-image"
+    description: Manage custom OS images on Hetzner Cloud.
+    maintainers:
+      - "Julian Tölle <julian.toelle97@gmail.com>"
+    license: MIT
+    private_key: "{{ .Env.AUR_SSH_KEY }}"
+    git_url: "ssh://aur@aur.archlinux.org/hcloud-upload-image-bin.git"
+    depends:
+      - openssh
+
+    package: |-
+      # bin
+      install -Dm755 "./hcloud-upload-image" "${pkgdir}/usr/bin/hcloud-upload-image"
+
+      # license
+      install -Dm644 "./LICENSE" "${pkgdir}/usr/share/licenses/hcloud-upload-image/LICENSE"
+
+      # completions
+      mkdir -p "${pkgdir}/usr/share/bash-completion/completions/"
+      mkdir -p "${pkgdir}/usr/share/zsh/site-functions/"
+      mkdir -p "${pkgdir}/usr/share/fish/vendor_completions.d/"
+      install -Dm644 "./completions/hcloud-upload-image.bash" "${pkgdir}/usr/share/bash-completion/completions/hcloud-upload-image"
+      install -Dm644 "./completions/hcloud-upload-image.zsh" "${pkgdir}/usr/share/zsh/site-functions/_hcloud-upload-image"
+      install -Dm644 "./completions/hcloud-upload-image.fish" "${pkgdir}/usr/share/fish/vendor_completions.d/hcloud-upload-image.fish"
+
 
 snapshot:
   name_template: "{{ .Version }}-dev+{{ .ShortCommit }}"
