@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.2.0](https://github.com/apricote/hcloud-upload-image/compare/v0.1.1...v0.2.0) (2024-05-09)
+
+
+### Features
+
+* packaging for deb, rpm, apk, aur ([#17](https://github.com/apricote/hcloud-upload-image/issues/17)) ([139761c](https://github.com/apricote/hcloud-upload-image/commit/139761cc28050b00bca22573d765f2b94af89bac))
+* upload local disk images ([#15](https://github.com/apricote/hcloud-upload-image/issues/15)) ([fcea3e3](https://github.com/apricote/hcloud-upload-image/commit/fcea3e3c6e5ba7383aa69838401903e3f54f910c))
+* upload xz compressed images ([#16](https://github.com/apricote/hcloud-upload-image/issues/16)) ([1c943e4](https://github.com/apricote/hcloud-upload-image/commit/1c943e4480ba2042fc3feabf363ec88eb2efbaee))
+
+
+### Bug Fixes
+
+* update user-agent in CLI ([#5](https://github.com/apricote/hcloud-upload-image/issues/5)) ([b17857c](https://github.com/apricote/hcloud-upload-image/commit/b17857c1fefc0b09da2ed2711b20ba76930dd365))
+
 ## [0.1.1](https://github.com/apricote/hcloud-upload-image/compare/v0.1.0...v0.1.1) (2024-05-04)
 
 
