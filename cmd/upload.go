@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"net/url"
+	"os"
 
 	"github.com/hetznercloud/hcloud-go/v2/hcloud"
 	"github.com/spf13/cobra"
@@ -13,6 +14,7 @@ import (
 
 const (
 	uploadFlagImageURL     = "image-url"
+	uploadFlagImagePath    = "image-path"
 	uploadFlagCompression  = "compression"
 	uploadFlagArchitecture = "architecture"
 	uploadFlagDescription  = "description"
@@ -21,10 +23,14 @@ const (
 
 // uploadCmd represents the upload command
 var uploadCmd = &cobra.Command{
-	Use:   "upload",
+	Use:   "upload (--image-path=<local-path> | --image-url=<url>) --architecture=<x86|arm>",
 	Short: "Upload the specified disk image into your Hetzner Cloud project.",
 	Long: `This command implements a fake "upload", by going through a real server and snapshots.
 This does cost a bit of money for the server.`,
+	Example: `  hcloud-upload-image upload --image-path /home/you/images/custom-linux-image-x86.bz2 --architecture x86 --compression bz2 --description "My super duper custom linux"
+  hcloud-upload-image upload --image-url https://examples.com/image-arm.raw --architecture arm --labels foo=bar,version=latest
+`,
+
 	GroupID: "primary",
 
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -32,23 +38,36 @@ This does cost a bit of money for the server.`,
 		logger := contextlogger.From(ctx)
 
 		imageURLString, _ := cmd.Flags().GetString(uploadFlagImageURL)
+		imagePathString, _ := cmd.Flags().GetString(uploadFlagImagePath)
 		imageCompression, _ := cmd.Flags().GetString(uploadFlagCompression)
 		architecture, _ := cmd.Flags().GetString(uploadFlagArchitecture)
 		description, _ := cmd.Flags().GetString(uploadFlagDescription)
 		labels, _ := cmd.Flags().GetStringToString(uploadFlagLabels)
 
-		imageURL, err := url.Parse(imageURLString)
-		if err != nil {
-			return fmt.Errorf("unable to parse url from --%s=%q: %w", uploadFlagImageURL, imageURLString, err)
-		}
-
-		image, err := client.Upload(ctx, hcloudimages.UploadOptions{
-			ImageURL:         imageURL,
+		options := hcloudimages.UploadOptions{
 			ImageCompression: hcloudimages.Compression(imageCompression),
 			Architecture:     hcloud.Architecture(architecture),
 			Description:      hcloud.Ptr(description),
 			Labels:           labels,
-		})
+		}
+
+		if imageURLString != "" {
+			imageURL, err := url.Parse(imageURLString)
+			if err != nil {
+				return fmt.Errorf("unable to parse url from --%s=%q: %w", uploadFlagImageURL, imageURLString, err)
+			}
+
+			options.ImageURL = imageURL
+		} else if imagePathString != "" {
+			imageFile, err := os.Open(imagePathString)
+			if err != nil {
+				return fmt.Errorf("unable to read file from --%s=%q: %w", uploadFlagImagePath, imagePathString, err)
+			}
+
+			options.ImageReader = imageFile
+		}
+
+		image, err := client.Upload(ctx, options)
 		if err != nil {
 			return fmt.Errorf("failed to upload the image: %w", err)
 		}
@@ -62,23 +81,25 @@ This does cost a bit of money for the server.`,
 func init() {
 	rootCmd.AddCommand(uploadCmd)
 
-	uploadCmd.Flags().String(uploadFlagImageURL, "", "Remote URL of the disk image that should be uploaded (required)")
-	_ = uploadCmd.MarkFlagRequired(uploadFlagImageURL)
+	uploadCmd.Flags().String(uploadFlagImageURL, "", "Remote URL of the disk image that should be uploaded")
+	uploadCmd.Flags().String(uploadFlagImagePath, "", "Local path to the disk image that should be uploaded")
+	uploadCmd.MarkFlagsMutuallyExclusive(uploadFlagImageURL, uploadFlagImagePath)
+	uploadCmd.MarkFlagsOneRequired(uploadFlagImageURL, uploadFlagImagePath)
 
-	uploadCmd.Flags().String(uploadFlagCompression, "", "Type of compression that was used on the disk image")
+	uploadCmd.Flags().String(uploadFlagCompression, "", "Type of compression that was used on the disk image [choices: bz2]")
 	_ = uploadCmd.RegisterFlagCompletionFunc(
 		uploadFlagCompression,
 		cobra.FixedCompletions([]string{string(hcloudimages.CompressionBZ2)}, cobra.ShellCompDirectiveNoFileComp),
 	)
 
-	uploadCmd.Flags().String(uploadFlagArchitecture, "", "CPU Architecture of the disk image. Choices: x86|arm")
+	uploadCmd.Flags().String(uploadFlagArchitecture, "", "CPU architecture of the disk image [choices: x86, arm]")
 	_ = uploadCmd.RegisterFlagCompletionFunc(
 		uploadFlagArchitecture,
 		cobra.FixedCompletions([]string{string(hcloud.ArchitectureX86), string(hcloud.ArchitectureARM)}, cobra.ShellCompDirectiveNoFileComp),
 	)
 	_ = uploadCmd.MarkFlagRequired(uploadFlagArchitecture)
 
-	uploadCmd.Flags().String(uploadFlagDescription, "", "Description for the resulting Image")
+	uploadCmd.Flags().String(uploadFlagDescription, "", "Description for the resulting image")
 
-	uploadCmd.Flags().StringToString(uploadFlagLabels, map[string]string{}, "Labels for the resulting Image")
+	uploadCmd.Flags().StringToString(uploadFlagLabels, map[string]string{}, "Labels for the resulting image")
 }

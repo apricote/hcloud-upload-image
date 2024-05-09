@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"log/slog"
 	"net/url"
 	"time"
@@ -47,6 +48,10 @@ var (
 type UploadOptions struct {
 	// ImageURL must be publicly available. The instance will download the image from this endpoint.
 	ImageURL *url.URL
+
+	// ImageReader
+	ImageReader io.Reader
+
 	// ImageCompression describes the compression of the referenced image file. It defaults to [CompressionNone]. If
 	// set to anything else, the file will be decompressed before written to the disk.
 	ImageCompression Compression
@@ -207,7 +212,7 @@ func (s *Client) Upload(ctx context.Context, options UploadOptions) (*hcloud.Ima
 	}()
 
 	// 3. Activate Rescue System
-	logger.InfoContext(ctx, "# Step 4: Activating Rescue System")
+	logger.InfoContext(ctx, "# Step 3: Activating Rescue System")
 	enableRescueResult, _, err := s.c.Server.EnableRescue(ctx, server, hcloud.ServerEnableRescueOpts{
 		Type:    defaultRescueType,
 		SSHKeys: []*hcloud.SSHKey{key},
@@ -276,20 +281,24 @@ func (s *Client) Upload(ctx context.Context, options UploadOptions) (*hcloud.Ima
 
 	// 6. SSH On Server: Download Image, Decompress, Write to Root Disk
 	logger.InfoContext(ctx, "# Step 6: Downloading image and writing to disk")
-	decompressionCommand := ""
+	cmd := ""
+	if options.ImageURL != nil {
+		cmd += fmt.Sprintf("wget --no-verbose -O - %q | ", options.ImageURL.String())
+	}
+
 	if options.ImageCompression != CompressionNone {
 		switch options.ImageCompression {
 		case CompressionBZ2:
-			decompressionCommand += "| bzip2 -cd"
+			cmd += "bzip2 -cd | "
 		default:
 			return nil, fmt.Errorf("unknown compression: %q", options.ImageCompression)
 		}
 	}
 
-	fullCmd := fmt.Sprintf("wget --no-verbose -O - %q %s | dd of=/dev/sda bs=4M && sync", options.ImageURL.String(), decompressionCommand)
-	logger.DebugContext(ctx, "running download, decompress and write to disk command", "cmd", fullCmd)
+	cmd += "dd of=/dev/sda bs=4M && sync"
+	logger.DebugContext(ctx, "running download, decompress and write to disk command", "cmd", cmd)
 
-	output, err := sshsession.Run(sshClient, fullCmd)
+	output, err := sshsession.Run(sshClient, cmd, options.ImageReader)
 	logger.InfoContext(ctx, "# Step 6: Finished writing image to disk")
 	logger.DebugContext(ctx, string(output))
 	if err != nil {
@@ -298,7 +307,7 @@ func (s *Client) Upload(ctx context.Context, options UploadOptions) (*hcloud.Ima
 
 	// 7. SSH On Server: Shutdown
 	logger.InfoContext(ctx, "# Step 7: Shutting down server")
-	_, err = sshsession.Run(sshClient, "shutdown now")
+	_, err = sshsession.Run(sshClient, "shutdown now", nil)
 	if err != nil {
 		// TODO Verify if shutdown error, otherwise return
 		logger.WarnContext(ctx, "shutdown returned error", "err", err)
