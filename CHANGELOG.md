@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/apricote/hcloud-upload-image/compare/v0.2.0...v0.2.1) (2024-05-10)
+
+
+### Bug Fixes
+
+* **cli:** completion requires HCLOUD_TOKEN ([#19](https://github.com/apricote/hcloud-upload-image/issues/19)) ([bb2ca48](https://github.com/apricote/hcloud-upload-image/commit/bb2ca482000f5c780545edb9a03aa9f6bf93d906))
+
 ## [0.2.0](https://github.com/apricote/hcloud-upload-image/compare/v0.1.1...v0.2.0) (2024-05-09)
 
 
