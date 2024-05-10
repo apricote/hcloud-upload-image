@@ -23,7 +23,11 @@ $ hcloud ssh-key list -l apricote.de/created-by=hcloud-upload-image
 
 This command does not handle any parallel executions of hcloud-upload-image
 and will remove in-use resources if called at the same time.`,
+
 	GroupID: "primary",
+
+	PreRun: initClient,
+
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := cmd.Context()
 		logger := contextlogger.From(ctx)

@@ -33,6 +33,8 @@ This does cost a bit of money for the server.`,
 
 	GroupID: "primary",
 
+	PreRun: initClient,
+
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := cmd.Context()
 		logger := contextlogger.From(ctx)

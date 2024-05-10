@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"log/slog"
 	"os"
 	"time"
@@ -46,8 +45,6 @@ var rootCmd = &cobra.Command{
 		logger := slog.Default()
 		ctx = contextlogger.New(ctx, logger)
 		cmd.SetContext(ctx)
-
-		client = newClient(ctx)
 	},
 }
 
@@ -71,7 +68,15 @@ func initLogger() *slog.Logger {
 
 }
 
-func newClient(ctx context.Context) *hcloudimages.Client {
+func initClient(cmd *cobra.Command, _ []string) {
+	if client != nil {
+		// Only init if not set.
+		// Theoretically this is not safe against data races and should use [sync.Once], but :shrug:
+		return
+	}
+
+	ctx := cmd.Context()
+
 	logger := contextlogger.From(ctx)
 	// Build hcloud-go client
 	if os.Getenv("HCLOUD_TOKEN") == "" {
@@ -89,7 +94,7 @@ func newClient(ctx context.Context) *hcloudimages.Client {
 		opts = append(opts, hcloud.WithDebugWriter(os.Stderr))
 	}
 
-	return hcloudimages.NewClient(hcloud.NewClient(opts...))
+	client = hcloudimages.NewClient(hcloud.NewClient(opts...))
 }
 
 func Execute() {
