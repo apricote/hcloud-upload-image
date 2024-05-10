@@ -31,7 +31,19 @@ This repository provides a simple CLI tool & Go library to do the above.
 
 #### Binary
 
-> TODO
+We provide pre-built `deb`, `rpm` and `apk` packages. Alternatively we also provide the binaries directly.
+
+Check out the [GitHub release artifacts](https://github.com/apricote/hcloud-upload-image/releases/latest) for all of these files and archives.
+
+##### Arch Linux
+
+You can get [`hcloud-upload-image-bin`](https://aur.archlinux.org/packages/hcloud-upload-image-bin) from the AUR.
+
+Use your preferred wrapper to install:
+
+```shell
+yay -S hcloud-upload-image-bin
+```
 
 #### `go install`
 
