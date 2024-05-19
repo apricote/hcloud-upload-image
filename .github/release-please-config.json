@@ -8,7 +8,7 @@
     ".": {
       "component": "cli",
       "package-name": "hcloud-upload-image",
-      "extra-files": ["internal/version/version.go"]
+      "extra-files": ["internal/version/version.go", "hcloud-upload-image.nix"]
     },
     "hcloudimages": {
       "component": "hcloudimages",
