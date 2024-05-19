@@ -2,11 +2,28 @@
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
   "include-component-in-tag": false,
   "include-v-in-tag": true,
+  "release-type": "go",
+  "group-pull-request-title-pattern": "chore(${branch}): release ${version}",
   "packages": {
     ".": {
-      "release-type": "go",
+      "component": "cli",
       "package-name": "hcloud-upload-image",
       "extra-files": ["internal/version/version.go"]
+    },
+    "hcloudimages": {
+      "component": "hcloudimages",
+      "package-name": "hcloudimages",
+      "include-component-in-tag": true,
+      "tag-separator": "/"
     }
-  }
+  },
+  "plugins": [
+    {
+      "type": "linked-versions",
+      "groupName": "repo",
+      "components": [
+        "cli", "hcloudimages"
+      ]
+    }
+  ]
 }
