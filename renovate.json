@@ -11,6 +11,9 @@
     "gomodTidy",
     "gomodUpdateImportPaths"
   ],
+  "pre-commit": {
+    "enabled": true
+  },
   "customManagers": [
     {
       "customType": "regex",

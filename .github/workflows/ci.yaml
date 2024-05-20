@@ -30,7 +30,6 @@ jobs:
           args: --timeout 5m
           working-directory: hcloudimages
 
-
   test:
     runs-on: ubuntu-latest
     steps:
@@ -44,7 +43,6 @@ jobs:
 
       - name: Run tests
         run: go test -v -race -coverpkg=./...,./hcloudimages/...  ./... ./hcloudimages/...
-
 
   go-mod-tidy:
     runs-on: ubuntu-latest
