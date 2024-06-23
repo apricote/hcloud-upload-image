@@ -34,11 +34,11 @@ var (
 	}
 
 	serverTypePerArchitecture = map[hcloud.Architecture]*hcloud.ServerType{
-		hcloud.ArchitectureX86: {Name: "cx11"},
+		hcloud.ArchitectureX86: {Name: "cx22"},
 		hcloud.ArchitectureARM: {Name: "cax11"},
 	}
 
-	defaultImage      = &hcloud.Image{Name: "ubuntu-22.04"}
+	defaultImage      = &hcloud.Image{Name: "ubuntu-24.04"}
 	defaultLocation   = &hcloud.Location{Name: "fsn1"}
 	defaultRescueType = hcloud.ServerRescueTypeLinux64
 
