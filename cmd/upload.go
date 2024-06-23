@@ -17,6 +17,7 @@ const (
 	uploadFlagImagePath    = "image-path"
 	uploadFlagCompression  = "compression"
 	uploadFlagArchitecture = "architecture"
+	uploadFlagServerType   = "server-type"
 	uploadFlagDescription  = "description"
 	uploadFlagLabels       = "labels"
 )
@@ -43,12 +44,12 @@ This does cost a bit of money for the server.`,
 		imagePathString, _ := cmd.Flags().GetString(uploadFlagImagePath)
 		imageCompression, _ := cmd.Flags().GetString(uploadFlagCompression)
 		architecture, _ := cmd.Flags().GetString(uploadFlagArchitecture)
+		serverType, _ := cmd.Flags().GetString(uploadFlagServerType)
 		description, _ := cmd.Flags().GetString(uploadFlagDescription)
 		labels, _ := cmd.Flags().GetStringToString(uploadFlagLabels)
 
 		options := hcloudimages.UploadOptions{
 			ImageCompression: hcloudimages.Compression(imageCompression),
-			Architecture:     hcloud.Architecture(architecture),
 			Description:      hcloud.Ptr(description),
 			Labels:           labels,
 		}
@@ -67,6 +68,12 @@ This does cost a bit of money for the server.`,
 			}
 
 			options.ImageReader = imageFile
+		}
+
+		if architecture != "" {
+			options.Architecture = hcloud.Architecture(architecture)
+		} else if serverType != "" {
+			options.ServerType = &hcloud.ServerType{Name: serverType}
 		}
 
 		image, err := client.Upload(ctx, options)
@@ -99,7 +106,12 @@ func init() {
 		uploadFlagArchitecture,
 		cobra.FixedCompletions([]string{string(hcloud.ArchitectureX86), string(hcloud.ArchitectureARM)}, cobra.ShellCompDirectiveNoFileComp),
 	)
-	_ = uploadCmd.MarkFlagRequired(uploadFlagArchitecture)
+
+	uploadCmd.Flags().String(uploadFlagServerType, "", "Explicitly use this server type to generate the image. Mutually exclusive with --architecture.")
+
+	// Only one of them needs to be set
+	uploadCmd.MarkFlagsOneRequired(uploadFlagArchitecture, uploadFlagServerType)
+	uploadCmd.MarkFlagsMutuallyExclusive(uploadFlagArchitecture, uploadFlagServerType)
 
 	uploadCmd.Flags().String(uploadFlagDescription, "", "Description for the resulting image")
 
