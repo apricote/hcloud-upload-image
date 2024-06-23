@@ -65,7 +65,16 @@ type UploadOptions struct {
 	// used with [hcloud.ArchitectureX86] or [hcloud.ArchitectureARM] servers.
 	//
 	// Internally this decides what server type is used for the temporary server.
+	//
+	// Optional if [UploadOptions.ServerType] is set.
 	Architecture hcloud.Architecture
+
+	// ServerType can be optionally set to override the default server type for the architecture.
+	// Situations where this makes sense:
+	//
+	//   - Your image is larger than the root disk of the default server types.
+	//   - The default server type is no longer available, or not temporarily out of stock.
+	ServerType *hcloud.ServerType
 
 	// Description is an optional description that the resulting image (snapshot) will have. There is no way to
 	// select images by its description, you should use Labels if you need  to identify your image later.
@@ -159,9 +168,15 @@ func (s *Client) Upload(ctx context.Context, options UploadOptions) (*hcloud.Ima
 
 	// 2. Create Server
 	logger.InfoContext(ctx, "# Step 2: Creating Server")
-	serverType, ok := serverTypePerArchitecture[options.Architecture]
-	if !ok {
-		return nil, fmt.Errorf("unknown architecture %q, valid options: %q, %q", options.Architecture, hcloud.ArchitectureX86, hcloud.ArchitectureARM)
+	var serverType *hcloud.ServerType
+	if options.ServerType != nil {
+		serverType = options.ServerType
+	} else {
+		var ok bool
+		serverType, ok = serverTypePerArchitecture[options.Architecture]
+		if !ok {
+			return nil, fmt.Errorf("unknown architecture %q, valid options: %q, %q", options.Architecture, hcloud.ArchitectureX86, hcloud.ArchitectureARM)
+		}
 	}
 
 	logger.DebugContext(ctx, "creating server with config",
