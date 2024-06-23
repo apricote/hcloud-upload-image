@@ -299,6 +299,10 @@ func (s *Client) Upload(ctx context.Context, options UploadOptions) (*hcloud.Ima
 	}
 
 	cmd += "dd of=/dev/sda bs=4M && sync"
+
+	// Make sure that we fail early, ie. if the image url does not work.
+	// the pipefail does not work correctly without wrapping in bash.
+	cmd = fmt.Sprintf("bash -c 'set -euo pipefail && %s'", cmd)
 	logger.DebugContext(ctx, "running download, decompress and write to disk command", "cmd", cmd)
 
 	output, err := sshsession.Run(sshClient, cmd, options.ImageReader)
