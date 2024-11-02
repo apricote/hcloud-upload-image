@@ -50,7 +50,7 @@ yay -S hcloud-upload-image-bin
 If you already have a recent Go toolchain installed, you can build & install the binary from source:
 
 ```shell
-go install github.com/apricote/hcloud-upload-image
+go install github.com/apricote/hcloud-upload-image@latest
 ```
 
 #### Usage
