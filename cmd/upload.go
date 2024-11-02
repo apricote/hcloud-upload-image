@@ -29,8 +29,8 @@ var uploadCmd = &cobra.Command{
 	Long: `This command implements a fake "upload", by going through a real server and snapshots.
 This does cost a bit of money for the server.`,
 	Example: `  hcloud-upload-image upload --image-path /home/you/images/custom-linux-image-x86.bz2 --architecture x86 --compression bz2 --description "My super duper custom linux"
-  hcloud-upload-image upload --image-url https://examples.com/image-arm.raw --architecture arm --labels foo=bar,version=latest
-`,
+  hcloud-upload-image upload --image-url https://examples.com/image-arm.raw --architecture arm --labels foo=bar,version=latest`,
+	DisableAutoGenTag: true,
 
 	GroupID: "primary",
 
@@ -88,7 +88,7 @@ This does cost a bit of money for the server.`,
 }
 
 func init() {
-	rootCmd.AddCommand(uploadCmd)
+	RootCmd.AddCommand(uploadCmd)
 
 	uploadCmd.Flags().String(uploadFlagImageURL, "", "Remote URL of the disk image that should be uploaded")
 	uploadCmd.Flags().String(uploadFlagImagePath, "", "Local path to the disk image that should be uploaded")

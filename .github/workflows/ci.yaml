@@ -30,7 +30,6 @@ jobs:
           args: --timeout 5m
           working-directory: hcloudimages
 
-
   test:
     runs-on: ubuntu-latest
     steps:
@@ -44,7 +43,6 @@ jobs:
 
       - name: Run tests
         run: go test -v -race -coverpkg=./...,./hcloudimages/...  ./... ./hcloudimages/...
-
 
   go-mod-tidy:
     runs-on: ubuntu-latest
@@ -65,3 +63,23 @@ jobs:
 
       - if: failure()
         run: echo "::error::Check failed, please run 'go mod tidy' and commit the changes."
+
+  cli-help-pages:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Generate CLI help pages
+        run: go run ./scripts/cli-help-pages.go
+
+      - name: Check uncommitted changes
+        run: git diff --exit-code
+
+      - if: failure()
+        run: echo "::error::Check failed, please run 'go run ./scripts/cli-help-pages.go' and commit the changes."
