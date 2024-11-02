@@ -18,11 +18,12 @@ that match the label "apricote.de/created-by=hcloud-upload-image".
 
 If you want to see a preview of what would be removed, you can use the official hcloud CLI and run:
 
-$ hcloud server list -l apricote.de/created-by=hcloud-upload-image
-$ hcloud ssh-key list -l apricote.de/created-by=hcloud-upload-image
+    $ hcloud server list -l apricote.de/created-by=hcloud-upload-image
+    $ hcloud ssh-key list -l apricote.de/created-by=hcloud-upload-image
 
 This command does not handle any parallel executions of hcloud-upload-image
 and will remove in-use resources if called at the same time.`,
+	DisableAutoGenTag: true,
 
 	GroupID: "primary",
 
@@ -44,5 +45,5 @@ and will remove in-use resources if called at the same time.`,
 }
 
 func init() {
-	rootCmd.AddCommand(cleanupCmd)
+	RootCmd.AddCommand(cleanupCmd)
 }

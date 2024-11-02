@@ -28,11 +28,13 @@ var (
 // The pre-authenticated client. Set in the root command PersistentPreRun
 var client *hcloudimages.Client
 
-// rootCmd represents the base command when called without any subcommands
-var rootCmd = &cobra.Command{
-	Use:          "hcloud-upload-image",
-	Long:         `Manage custom OS images on Hetzner Cloud.`,
-	SilenceUsage: true,
+// RootCmd represents the base command when called without any subcommands
+var RootCmd = &cobra.Command{
+	Use:               "hcloud-upload-image",
+	Short:             `Manage custom OS images on Hetzner Cloud.`,
+	Long:              `Manage custom OS images on Hetzner Cloud.`,
+	SilenceUsage:      true,
+	DisableAutoGenTag: true,
 
 	Version: version.Version,
 
@@ -98,18 +100,18 @@ func initClient(cmd *cobra.Command, _ []string) {
 }
 
 func Execute() {
-	err := rootCmd.Execute()
+	err := RootCmd.Execute()
 	if err != nil {
 		os.Exit(1)
 	}
 }
 
 func init() {
-	rootCmd.SetErrPrefix("\033[1;31mError:")
+	RootCmd.SetErrPrefix("\033[1;31mError:")
 
-	rootCmd.PersistentFlags().CountVarP(&verbose, flagVerbose, "v", "verbose debug output, can be specified up to 2 times")
+	RootCmd.PersistentFlags().CountVarP(&verbose, flagVerbose, "v", "verbose debug output, can be specified up to 2 times")
 
-	rootCmd.AddGroup(&cobra.Group{
+	RootCmd.AddGroup(&cobra.Group{
 		ID:    "primary",
 		Title: "Primary Commands:",
 	})

@@ -63,7 +63,7 @@ hcloud-upload-image upload \
   --compression bz2
 ```
 
-To learn more, you can use the embedded help output:
+To learn more, you can use the embedded help output or check out the [CLI help pages in this repository](docs/cli/hcloud-upload-image.md).:
 
 ```shell
 hcloud-upload-image --help
