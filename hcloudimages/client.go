@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/hetznercloud/hcloud-go/v2/hcloud"
-	"github.com/hetznercloud/hcloud-go/v2/hcloud/exp/kit/sshutils"
+	"github.com/hetznercloud/hcloud-go/v2/hcloud/exp/kit/sshutil"
 	"golang.org/x/crypto/ssh"
 
 	"github.com/apricote/hcloud-upload-image/hcloudimages/contextlogger"
@@ -136,7 +136,7 @@ func (s *Client) Upload(ctx context.Context, options UploadOptions) (*hcloud.Ima
 
 	// 1. Create SSH Key
 	logger.InfoContext(ctx, "# Step 1: Generating SSH Key")
-	privateKey, publicKey, err := sshutils.GenerateKeyPair()
+	privateKey, publicKey, err := sshutil.GenerateKeyPair()
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate temporary ssh key pair: %w", err)
 	}
