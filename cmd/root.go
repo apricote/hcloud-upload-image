@@ -89,7 +89,7 @@ func initClient(cmd *cobra.Command, _ []string) {
 	opts := []hcloud.ClientOption{
 		hcloud.WithToken(os.Getenv("HCLOUD_TOKEN")),
 		hcloud.WithApplication("hcloud-upload-image", version.Version),
-		hcloud.WithPollBackoffFunc(backoff.ExponentialBackoffWithLimit(2, 1*time.Second, 30*time.Second)),
+		hcloud.WithPollOpts(hcloud.PollOpts{BackoffFunc: backoff.ExponentialBackoffWithLimit(2, 1*time.Second, 30*time.Second)}),
 	}
 
 	if os.Getenv("HCLOUD_DEBUG") != "" || verbose >= 2 {
