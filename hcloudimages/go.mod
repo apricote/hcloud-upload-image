@@ -3,7 +3,7 @@ module github.com/apricote/hcloud-upload-image/hcloudimages
 go 1.22.2
 
 require (
-	github.com/hetznercloud/hcloud-go/v2 v2.15.0
+	github.com/hetznercloud/hcloud-go/v2 v2.16.0
 	github.com/stretchr/testify v1.9.0
 	golang.org/x/crypto v0.28.0
 )
