@@ -45,6 +45,23 @@ Use your preferred wrapper to install:
 yay -S hcloud-upload-image-bin
 ```
 
+#### Docker
+
+You can build a Docker image by cli command(from the root of this repo):
+
+```shell
+docker build -t hcloud-upload-image .
+```
+
+And the next, you can use it like this(for example):
+
+```shell
+docker run -ti --rm -e HCLOUD_TOKEN="<your token>" \
+  --image-url "https://example.com/disk-image-x86.raw.bz2" \
+  --architecture x86 \
+  --compression bz2
+```
+
 #### `go install`
 
 If you already have a recent Go toolchain installed, you can build & install the binary from source:
