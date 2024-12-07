@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/apricote/hcloud-upload-image/compare/hcloudimages/v0.3.0...hcloudimages/v0.3.1) (2024-12-07)
+
+
+### Bug Fixes
+
+* **cli:** local install fails because of go.mod replace ([#47](https://github.com/apricote/hcloud-upload-image/issues/47)) ([66dc5f7](https://github.com/apricote/hcloud-upload-image/commit/66dc5f70b604ed3ee964576d74f94bdcea710c95))
+
 ## [0.3.0](https://github.com/apricote/hcloud-upload-image/compare/hcloudimages/v0.2.0...hcloudimages/v0.3.0) (2024-06-23)
 
 
