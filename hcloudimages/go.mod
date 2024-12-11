@@ -5,7 +5,7 @@ go 1.22.2
 require (
 	github.com/hetznercloud/hcloud-go/v2 v2.17.0
 	github.com/stretchr/testify v1.10.0
-	golang.org/x/crypto v0.30.0
+	golang.org/x/crypto v0.31.0
 )
 
 require (
