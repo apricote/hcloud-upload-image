@@ -11,6 +11,7 @@
     "gomodTidy",
     "gomodUpdateImportPaths"
   ],
+  "goGetDirs": ["./...", "./hcloudimages/..."],
   "customManagers": [
     {
       "customType": "regex",
