@@ -1,0 +1,8 @@
+[book]
+language = "en"
+multilingual = false
+src = "."
+title = "hcloud-upload-image"
+
+[output.html]
+git-repository-url = "https://github.com/apricote/hcloud-upload-image"

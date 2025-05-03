@@ -1,0 +1,16 @@
+name: "Setup mdbook"
+inputs:
+  version:
+    description: "mdbook version"
+
+runs:
+  using: composite
+  steps:
+    - name: Setup mdbook
+      shell: bash
+      env:
+        url: https://github.com/rust-lang/mdbook/releases/download/${{ inputs.version }}/mdbook-${{ inputs.version }}-x86_64-unknown-linux-gnu.tar.gz
+      run: |
+        mkdir mdbook
+        curl -sSL "$url" | tar -xz --directory=./mdbook
+        echo `pwd`/mdbook >> $GITHUB_PATH
