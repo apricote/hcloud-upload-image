@@ -16,14 +16,5 @@
       "include-component-in-tag": true,
       "tag-separator": "/"
     }
-  },
-  "plugins": [
-    {
-      "type": "linked-versions",
-      "groupName": "repo",
-      "components": [
-        "cli", "hcloudimages"
-      ]
-    }
-  ]
+  }
 }
