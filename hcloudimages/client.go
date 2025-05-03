@@ -43,6 +43,10 @@ var (
 	defaultRescueType = hcloud.ServerRescueTypeLinux64
 
 	defaultSSHDialTimeout = 1 * time.Minute
+
+	// Size observed on x86, 2025-05-03, no idea if that changes.
+	// Might be able to extends this to more of the available memory.
+	rescueSystemRootDiskSizeMB int64 = 960
 )
 
 type UploadOptions struct {
@@ -56,10 +60,14 @@ type UploadOptions struct {
 	// set to anything else, the file will be decompressed before written to the disk.
 	ImageCompression Compression
 
+	ImageFormat Format
+
+	// Can be optionally set to make the client validate that the image can be written to the server.
+	ImageSize int64
+
 	// Possible future additions:
 	// ImageSignatureVerification
 	// ImageLocalPath
-	// ImageType (RawDiskImage, ISO, qcow2, ...)
 
 	// Architecture should match the architecture of the Image. This decides if the Snapshot can later be
 	// used with [hcloud.ArchitectureX86] or [hcloud.ArchitectureARM] servers.
@@ -101,6 +109,19 @@ const (
 	// zip,zstd
 )
 
+type Format string
+
+const (
+	FormatRaw Format = ""
+
+	// FormatQCOW2 allows to upload images in the qcow2 format directly.
+	//
+	// The qcow2 image must fit on the disk available in the rescue system. "qemu-img dd", which is used to convert
+	// qcow2 to raw, requires a file as an input. If [UploadOption.ImageSize] is set and FormatQCOW2 is used, there is a
+	// warning message displayed if there is a high probability of issues.
+	FormatQCOW2 Format = "qcow2"
+)
+
 // NewClient instantiates a new client. It requires a working [*hcloud.Client] to interact with the Hetzner Cloud API.
 func NewClient(c *hcloud.Client) *Client {
 	return &Client{
@@ -133,6 +154,19 @@ func (s *Client) Upload(ctx context.Context, options UploadOptions) (*hcloud.Ima
 	// For simplicity, we use the name random name for SSH Key + Server
 	resourceName := resourcePrefix + id
 	labels := labelutil.Merge(DefaultLabels, options.Labels)
+
+	// 0. Validations
+	if options.ImageFormat == FormatQCOW2 && options.ImageSize > 0 {
+		if options.ImageSize > rescueSystemRootDiskSizeMB*1024*1024 {
+			// Just a warning, because the size might change with time.
+			// Alternatively one could add an override flag for the check and make this an error.
+			logger.WarnContext(ctx,
+				fmt.Sprintf("image must be smaller than %d MB (rescue system root disk) for qcow2", rescueSystemRootDiskSizeMB),
+				"maximum-size", rescueSystemRootDiskSizeMB,
+				"actual-size", options.ImageSize/(1024*1024),
+			)
+		}
+	}
 
 	// 1. Create SSH Key
 	logger.InfoContext(ctx, "# Step 1: Generating SSH Key")
@@ -299,21 +333,28 @@ func (s *Client) Upload(ctx context.Context, options UploadOptions) (*hcloud.Ima
 	logger.InfoContext(ctx, "# Step 6: Downloading image and writing to disk")
 	cmd := ""
 	if options.ImageURL != nil {
-		cmd += fmt.Sprintf("wget --no-verbose -O - %q | ", options.ImageURL.String())
+		cmd += fmt.Sprintf("wget --no-verbose -O - %q", options.ImageURL.String())
 	}
 
 	if options.ImageCompression != CompressionNone {
 		switch options.ImageCompression {
 		case CompressionBZ2:
-			cmd += "bzip2 -cd | "
+			cmd += " | bzip2 -cd"
 		case CompressionXZ:
-			cmd += "xz -cd | "
+			cmd += " | xz -cd"
 		default:
 			return nil, fmt.Errorf("unknown compression: %q", options.ImageCompression)
 		}
 	}
 
-	cmd += "dd of=/dev/sda bs=4M && sync"
+	switch options.ImageFormat {
+	case FormatRaw:
+		cmd += " | dd of=/dev/sda bs=4M"
+	case FormatQCOW2:
+		cmd += " > image.qcow2 && qemu-img dd -f qcow2 -O raw if=image.qcow2 of=/dev/sda bs=4M"
+	}
+
+	cmd += " && sync"
 
 	// Make sure that we fail early, ie. if the image url does not work.
 	// the pipefail does not work correctly without wrapping in bash.
