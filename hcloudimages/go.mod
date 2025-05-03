@@ -7,7 +7,7 @@ toolchain go1.24.2
 require (
 	github.com/hetznercloud/hcloud-go/v2 v2.21.0
 	github.com/stretchr/testify v1.10.0
-	golang.org/x/crypto v0.36.0
+	golang.org/x/crypto v0.37.0
 )
 
 require (
@@ -22,8 +22,8 @@ require (
 	github.com/prometheus/common v0.62.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
 	golang.org/x/net v0.38.0 // indirect
-	golang.org/x/sys v0.31.0 // indirect
-	golang.org/x/text v0.23.0 // indirect
+	golang.org/x/sys v0.32.0 // indirect
+	golang.org/x/text v0.24.0 // indirect
 	google.golang.org/protobuf v1.36.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
