@@ -327,7 +327,7 @@ func (s *Client) Upload(ctx context.Context, options UploadOptions) (*hcloud.Ima
 	if err != nil {
 		return nil, fmt.Errorf("failed to ssh into temporary server: %w", err)
 	}
-	defer sshClient.Close()
+	defer func() { _ = sshClient.Close() }()
 
 	// 6. SSH On Server: Download Image, Decompress, Write to Root Disk
 	logger.InfoContext(ctx, "# Step 6: Downloading image and writing to disk")

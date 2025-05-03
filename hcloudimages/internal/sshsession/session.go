@@ -12,7 +12,7 @@ func Run(client *ssh.Client, cmd string, stdin io.Reader) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer sess.Close()
+	defer func() { _ = sess.Close() }()
 
 	if stdin != nil {
 		sess.Stdin = stdin
