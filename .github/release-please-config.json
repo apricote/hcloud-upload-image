@@ -3,7 +3,7 @@
   "include-component-in-tag": false,
   "include-v-in-tag": true,
   "release-type": "go",
-  "group-pull-request-title-pattern": "chore(${branch}): release ${version}",
+  "separate-pull-requests": true,
   "packages": {
     ".": {
       "component": "cli",
