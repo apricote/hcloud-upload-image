@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/apricote/hcloud-upload-image/compare/hcloudimages/v0.3.1...hcloudimages/v0.4.0) (2025-05-03)
+
+
+### Features
+
+* upload qcow2 images ([#69](https://github.com/apricote/hcloud-upload-image/issues/69)) ([ac3e9dd](https://github.com/apricote/hcloud-upload-image/commit/ac3e9dd7ecd86d1538b6401c3073c7c078c40847)), closes [#44](https://github.com/apricote/hcloud-upload-image/issues/44)
+
 ## [0.3.1](https://github.com/apricote/hcloud-upload-image/compare/hcloudimages/v0.3.0...hcloudimages/v0.3.1) (2024-12-07)
 
 
