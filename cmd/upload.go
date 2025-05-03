@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	_ "embed"
 	"fmt"
+	"net/http"
 	"net/url"
 	"os"
 
@@ -16,20 +18,24 @@ const (
 	uploadFlagImageURL     = "image-url"
 	uploadFlagImagePath    = "image-path"
 	uploadFlagCompression  = "compression"
+	uploadFlagFormat       = "format"
 	uploadFlagArchitecture = "architecture"
 	uploadFlagServerType   = "server-type"
 	uploadFlagDescription  = "description"
 	uploadFlagLabels       = "labels"
 )
 
+//go:embed upload.md
+var longDescription string
+
 // uploadCmd represents the upload command
 var uploadCmd = &cobra.Command{
 	Use:   "upload (--image-path=<local-path> | --image-url=<url>) --architecture=<x86|arm>",
 	Short: "Upload the specified disk image into your Hetzner Cloud project.",
-	Long: `This command implements a fake "upload", by going through a real server and snapshots.
-This does cost a bit of money for the server.`,
+	Long:  longDescription,
 	Example: `  hcloud-upload-image upload --image-path /home/you/images/custom-linux-image-x86.bz2 --architecture x86 --compression bz2 --description "My super duper custom linux"
-  hcloud-upload-image upload --image-url https://examples.com/image-arm.raw --architecture arm --labels foo=bar,version=latest`,
+  hcloud-upload-image upload --image-url https://examples.com/image-arm.raw --architecture arm --labels foo=bar,version=latest
+  hcloud-upload-image upload --image-url https://examples.com/image-x86.qcow2 --architecture x86 --format qcow2`,
 	DisableAutoGenTag: true,
 
 	GroupID: "primary",
@@ -43,6 +49,7 @@ This does cost a bit of money for the server.`,
 		imageURLString, _ := cmd.Flags().GetString(uploadFlagImageURL)
 		imagePathString, _ := cmd.Flags().GetString(uploadFlagImagePath)
 		imageCompression, _ := cmd.Flags().GetString(uploadFlagCompression)
+		imageFormat, _ := cmd.Flags().GetString(uploadFlagFormat)
 		architecture, _ := cmd.Flags().GetString(uploadFlagArchitecture)
 		serverType, _ := cmd.Flags().GetString(uploadFlagServerType)
 		description, _ := cmd.Flags().GetString(uploadFlagDescription)
@@ -50,6 +57,7 @@ This does cost a bit of money for the server.`,
 
 		options := hcloudimages.UploadOptions{
 			ImageCompression: hcloudimages.Compression(imageCompression),
+			ImageFormat:      hcloudimages.Format(imageFormat),
 			Description:      hcloud.Ptr(description),
 			Labels:           labels,
 		}
@@ -60,8 +68,26 @@ This does cost a bit of money for the server.`,
 				return fmt.Errorf("unable to parse url from --%s=%q: %w", uploadFlagImageURL, imageURLString, err)
 			}
 
+			// Check for image size
+			resp, err := http.Head(imageURL.String())
+			switch {
+			case err != nil:
+				logger.DebugContext(ctx, "failed to check for file size, error on request", "err", err)
+			case resp.ContentLength == -1:
+				logger.DebugContext(ctx, "failed to check for file size, server did not set the Content-Length", "err", err)
+			default:
+				options.ImageSize = resp.ContentLength
+			}
+
 			options.ImageURL = imageURL
 		} else if imagePathString != "" {
+			stat, err := os.Stat(imagePathString)
+			if err != nil {
+				logger.DebugContext(ctx, "failed to check for file size, error on stat", "err", err)
+			} else {
+				options.ImageSize = stat.Size()
+			}
+
 			imageFile, err := os.Open(imagePathString)
 			if err != nil {
 				return fmt.Errorf("unable to read file from --%s=%q: %w", uploadFlagImagePath, imagePathString, err)
@@ -99,6 +125,12 @@ func init() {
 	_ = uploadCmd.RegisterFlagCompletionFunc(
 		uploadFlagCompression,
 		cobra.FixedCompletions([]string{string(hcloudimages.CompressionBZ2), string(hcloudimages.CompressionXZ)}, cobra.ShellCompDirectiveNoFileComp),
+	)
+
+	uploadCmd.Flags().String(uploadFlagFormat, "", "Format of the image. [choices: qcow2]")
+	_ = uploadCmd.RegisterFlagCompletionFunc(
+		uploadFlagFormat,
+		cobra.FixedCompletions([]string{string(hcloudimages.FormatQCOW2)}, cobra.ShellCompDirectiveNoFileComp),
 	)
 
 	uploadCmd.Flags().String(uploadFlagArchitecture, "", "CPU architecture of the disk image [choices: x86, arm]")
