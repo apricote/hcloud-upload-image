@@ -18,13 +18,13 @@ jobs:
           go-version-file: go.mod
 
       - name: Run golangci-lint (CLI)
-        uses: golangci/golangci-lint-action@v7
+        uses: golangci/golangci-lint-action@v8
         with:
           version: v2.1.5 # renovate: datasource=github-releases depName=golangci/golangci-lint
           args: --timeout 5m
 
       - name: Run golangci-lint (Lib)
-        uses: golangci/golangci-lint-action@v7
+        uses: golangci/golangci-lint-action@v8
         with:
           version: v2.1.5 # renovate: datasource=github-releases depName=golangci/golangci-lint
           args: --timeout 5m
