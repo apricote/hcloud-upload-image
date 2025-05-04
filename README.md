@@ -62,6 +62,14 @@ If you already have a recent Go toolchain installed, you can build & install the
 go install github.com/apricote/hcloud-upload-image@latest
 ```
 
+#### Docker
+
+There is a docker image published at `ghcr.io/apricote/hcloud-upload-image`.
+
+```shell
+docker run --rm -e HCLOUD_TOKEN="<your token>" ghcr.io/apricote/hcloud-upload-image:latest <command>
+```
+
 #### Usage
 
 ```shell
