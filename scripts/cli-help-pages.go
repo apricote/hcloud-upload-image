@@ -11,7 +11,7 @@ import (
 
 func run() error {
 	// Define the directory where the docs will be generated
-	dir := "docs/cli"
+	dir := "docs/reference/cli"
 
 	// Ensure the directory exists
 	if err := os.MkdirAll(dir, 0755); err != nil {

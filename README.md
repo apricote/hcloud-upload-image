@@ -1,6 +1,15 @@
 # `hcloud-upload-image`
 
-Quickly upload any raw disk images into your [Hetzner Cloud](https://hetzner.com/cloud) projects!
+<p align="center">
+  Quickly upload any raw disk images into your <a href="https://hetzner.com/cloud" target="_blank">Hetzner Cloud</a> projects!
+</p>
+
+<p align="center">
+  <a href="https://apricote.github.io/hcloud-upload-image" target="_blank"><img src="https://img.shields.io/badge/Documentation-brightgreen?style=flat-square" alt="Badge: Documentation"/></a>
+  <a href="https://github.com/apricote/hcloud-upload-image/releases" target="_blank"><img src="https://img.shields.io/github/v/release/apricote/hcloud-upload-image?sort=semver&display_name=release&style=flat-square&color=green" alt="Badge: Stable Release"/></a>
+  <img src="https://img.shields.io/badge/License-MIT-green?style=flat-square" alt="Badge: License MIT"/>
+</p>
+
 
 ## About
 
@@ -63,7 +72,7 @@ hcloud-upload-image upload \
   --compression bz2
 ```
 
-To learn more, you can use the embedded help output or check out the [CLI help pages in this repository](docs/cli/hcloud-upload-image.md).:
+To learn more, you can use the embedded help output or check out the [CLI help pages in this repository](docs/reference/cli/hcloud-upload-image.md).:
 
 ```shell
 hcloud-upload-image --help
