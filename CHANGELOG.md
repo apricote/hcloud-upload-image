@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.0.0](https://github.com/apricote/hcloud-upload-image/compare/v0.3.1...v1.0.0) (2025-05-04)
+
+
+### Features
+
+* **deps:** require Go 1.23 ([#70](https://github.com/apricote/hcloud-upload-image/issues/70)) ([f3fcb62](https://github.com/apricote/hcloud-upload-image/commit/f3fcb623fc00095ab3806fa41dbcb7083c13c5df))
+* docs website ([#80](https://github.com/apricote/hcloud-upload-image/issues/80)) ([d144b85](https://github.com/apricote/hcloud-upload-image/commit/d144b85e3dfd933e8fbb09a0e6f5acacb4d05bea))
+* publish container image ([#82](https://github.com/apricote/hcloud-upload-image/issues/82)) ([91df729](https://github.com/apricote/hcloud-upload-image/commit/91df729f1cfd636355fc8338f47aefa4ab8b3b84))
+* upload qcow2 images ([#69](https://github.com/apricote/hcloud-upload-image/issues/69)) ([ac3e9dd](https://github.com/apricote/hcloud-upload-image/commit/ac3e9dd7ecd86d1538b6401c3073c7c078c40847))
+
 ## [0.3.1](https://github.com/apricote/hcloud-upload-image/compare/v0.3.0...v0.3.1) (2024-12-07)
 
 
