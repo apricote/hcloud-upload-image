@@ -19,7 +19,7 @@ jobs:
 
       - uses: ./.github/actions/setup-mdbook
         with:
-          version: v0.4.48 # renovate: datasource=github-releases depName=rust-lang/mdbook
+          version: v0.4.49 # renovate: datasource=github-releases depName=rust-lang/mdbook
 
       - name: Build Book
         working-directory: docs
