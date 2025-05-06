@@ -18,7 +18,7 @@ func Retry(ctx context.Context, maxTries int, f func() error) error {
 
 	var err error
 
-	backoffFunc := backoff.ExponentialBackoffWithLimit(2, 200*time.Millisecond, 2*time.Second)
+	backoffFunc := backoff.ExponentialBackoffWithLimit(2, 200*time.Millisecond, 30*time.Second)
 
 	for try := 0; try < maxTries; try++ {
 		if ctx.Err() != nil {
