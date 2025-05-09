@@ -316,7 +316,7 @@ func (s *Client) Upload(ctx context.Context, options UploadOptions) (*hcloud.Ima
 
 	err = control.Retry(
 		contextlogger.New(ctx, logger.With("operation", "ssh")),
-		10,
+		100, // ~ 3 minutes
 		func() error {
 			var err error
 			logger.DebugContext(ctx, "trying to connect to server", "ip", server.PublicNet.IPv4.IP)

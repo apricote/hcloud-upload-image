@@ -9,7 +9,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/apricote/hcloud-upload-image/hcloudimages"
-	"github.com/apricote/hcloud-upload-image/hcloudimages/backoff"
 	"github.com/apricote/hcloud-upload-image/hcloudimages/contextlogger"
 	"github.com/apricote/hcloud-upload-image/internal/ui"
 	"github.com/apricote/hcloud-upload-image/internal/version"
@@ -89,7 +88,7 @@ func initClient(cmd *cobra.Command, _ []string) {
 	opts := []hcloud.ClientOption{
 		hcloud.WithToken(os.Getenv("HCLOUD_TOKEN")),
 		hcloud.WithApplication("hcloud-upload-image", version.Version),
-		hcloud.WithPollOpts(hcloud.PollOpts{BackoffFunc: backoff.ExponentialBackoffWithLimit(2, 1*time.Second, 30*time.Second)}),
+		hcloud.WithPollOpts(hcloud.PollOpts{BackoffFunc: hcloud.ExponentialBackoffWithOpts(hcloud.ExponentialBackoffOpts{Multiplier: 2, Base: 1 * time.Second, Cap: 30 * time.Second})}),
 	}
 
 	if os.Getenv("HCLOUD_DEBUG") != "" || verbose >= 2 {
