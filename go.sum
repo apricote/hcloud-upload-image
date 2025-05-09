@@ -1,5 +1,5 @@
-github.com/apricote/hcloud-upload-image/hcloudimages v1.0.0 h1:Gq0SSuPCiZFApGQ3SIEEQqD8btD6tRwfOxr+cky7oTo=
-github.com/apricote/hcloud-upload-image/hcloudimages v1.0.0/go.mod h1:MwBmhSPlwS3S3ynOsFXPbco40Iv3udqhXKz2EXKSpVU=
+github.com/apricote/hcloud-upload-image/hcloudimages v1.0.1 h1:ZljuANGyGGxUF+afF6HFha88B9ln60gzVPnndDO/1OU=
+github.com/apricote/hcloud-upload-image/hcloudimages v1.0.1/go.mod h1:iJ95BaLfISZBY9X8K2Y2A5a49dI0RLjAuq+4BqlOSgA=
 github.com/beorn7/perks v1.0.1 h1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=
 github.com/beorn7/perks v1.0.1/go.mod h1:G2ZrVWU2WbWT9wwq4/hrbKbnv/1ERSJQ0ibhJ6rlkpw=
 github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=
