@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/apricote/hcloud-upload-image/compare/hcloudimages/v1.0.0...hcloudimages/v1.0.1) (2025-05-09)
+
+
+### Bug Fixes
+
+* timeout while waiting for SSH to become available ([#92](https://github.com/apricote/hcloud-upload-image/issues/92)) ([e490b9a](https://github.com/apricote/hcloud-upload-image/commit/e490b9a7f394e268fa1946ca51aa998c78c3d46a))
+
 ## [1.0.0](https://github.com/apricote/hcloud-upload-image/compare/hcloudimages/v0.3.1...hcloudimages/v1.0.0) (2025-05-04)
 
 
