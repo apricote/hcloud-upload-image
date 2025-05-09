@@ -16,6 +16,10 @@ import (
 // It uses the formula:
 //
 //	min(b^retries * d, limit)
+//
+// This function has a known overflow issue and should not be used anymore.
+//
+// Deprecated: Use BackoffFuncWithOpts from github.com/hetznercloud/hcloud-go/v2/hcloud instead.
 func ExponentialBackoffWithLimit(b float64, d time.Duration, limit time.Duration) hcloud.BackoffFunc {
 	return func(retries int) time.Duration {
 		current := time.Duration(math.Pow(b, float64(retries))) * d
