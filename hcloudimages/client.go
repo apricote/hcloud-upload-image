@@ -331,34 +331,12 @@ func (s *Client) Upload(ctx context.Context, options UploadOptions) (*hcloud.Ima
 
 	// 6. SSH On Server: Download Image, Decompress, Write to Root Disk
 	logger.InfoContext(ctx, "# Step 6: Downloading image and writing to disk")
-	cmd := ""
-	if options.ImageURL != nil {
-		cmd += fmt.Sprintf("wget --no-verbose -O - %q", options.ImageURL.String())
+
+	cmd, err := assembleCommand(options)
+	if err != nil {
+		return nil, err
 	}
 
-	if options.ImageCompression != CompressionNone {
-		switch options.ImageCompression {
-		case CompressionBZ2:
-			cmd += " | bzip2 -cd"
-		case CompressionXZ:
-			cmd += " | xz -cd"
-		default:
-			return nil, fmt.Errorf("unknown compression: %q", options.ImageCompression)
-		}
-	}
-
-	switch options.ImageFormat {
-	case FormatRaw:
-		cmd += " | dd of=/dev/sda bs=4M"
-	case FormatQCOW2:
-		cmd += " > image.qcow2 && qemu-img dd -f qcow2 -O raw if=image.qcow2 of=/dev/sda bs=4M"
-	}
-
-	cmd += " && sync"
-
-	// Make sure that we fail early, ie. if the image url does not work.
-	// the pipefail does not work correctly without wrapping in bash.
-	cmd = fmt.Sprintf("bash -c 'set -euo pipefail && %s'", cmd)
 	logger.DebugContext(ctx, "running download, decompress and write to disk command", "cmd", cmd)
 
 	output, err := sshsession.Run(sshClient, cmd, options.ImageReader)
@@ -521,4 +499,40 @@ func (s *Client) cleanupTempSSHKeys(ctx context.Context, logger *slog.Logger, se
 	}
 
 	return nil
+}
+
+func assembleCommand(options UploadOptions) (string, error) {
+	// Make sure that we fail early, ie. if the image url does not work
+	cmd := "set -euo pipefail && "
+
+	if options.ImageURL != nil {
+		cmd += fmt.Sprintf("wget --no-verbose -O - %q | ", options.ImageURL.String())
+	}
+
+	if options.ImageCompression != CompressionNone {
+		switch options.ImageCompression {
+		case CompressionBZ2:
+			cmd += "bzip2 -cd | "
+		case CompressionXZ:
+			cmd += "xz -cd | "
+		default:
+			return "", fmt.Errorf("unknown compression: %q", options.ImageCompression)
+		}
+	}
+
+	switch options.ImageFormat {
+	case FormatRaw:
+		cmd += "dd of=/dev/sda bs=4M"
+	case FormatQCOW2:
+		cmd += "tee image.qcow2 > /dev/null && qemu-img dd -f qcow2 -O raw if=image.qcow2 of=/dev/sda bs=4M"
+	default:
+		return "", fmt.Errorf("unknown format: %q", options.ImageFormat)
+	}
+
+	cmd += " && sync"
+
+	// the pipefail does not work correctly without wrapping in bash.
+	cmd = fmt.Sprintf("bash -c '%s'", cmd)
+
+	return cmd, nil
 }
