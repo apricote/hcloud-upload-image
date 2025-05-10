@@ -329,8 +329,17 @@ func (s *Client) Upload(ctx context.Context, options UploadOptions) (*hcloud.Ima
 	}
 	defer func() { _ = sshClient.Close() }()
 
-	// 6. SSH On Server: Download Image, Decompress, Write to Root Disk
-	logger.InfoContext(ctx, "# Step 6: Downloading image and writing to disk")
+	// 6. Wipe existing disk, to avoid storing any bytes from it in the snapshot
+	logger.InfoContext(ctx, "# Step 6: Cleaning existing disk")
+
+	output, err := sshsession.Run(sshClient, "blkdiscard /dev/sda", nil)
+	logger.DebugContext(ctx, string(output))
+	if err != nil {
+		return nil, fmt.Errorf("failed to clean existing disk: %w", err)
+	}
+
+	// 7. SSH On Server: Download Image, Decompress, Write to Root Disk
+	logger.InfoContext(ctx, "# Step 7: Downloading image and writing to disk")
 
 	cmd, err := assembleCommand(options)
 	if err != nil {
@@ -339,23 +348,23 @@ func (s *Client) Upload(ctx context.Context, options UploadOptions) (*hcloud.Ima
 
 	logger.DebugContext(ctx, "running download, decompress and write to disk command", "cmd", cmd)
 
-	output, err := sshsession.Run(sshClient, cmd, options.ImageReader)
-	logger.InfoContext(ctx, "# Step 6: Finished writing image to disk")
+	output, err = sshsession.Run(sshClient, cmd, options.ImageReader)
+	logger.InfoContext(ctx, "# Step 7: Finished writing image to disk")
 	logger.DebugContext(ctx, string(output))
 	if err != nil {
 		return nil, fmt.Errorf("failed to download and write the image: %w", err)
 	}
 
-	// 7. SSH On Server: Shutdown
-	logger.InfoContext(ctx, "# Step 7: Shutting down server")
+	// 8. SSH On Server: Shutdown
+	logger.InfoContext(ctx, "# Step 8: Shutting down server")
 	_, err = sshsession.Run(sshClient, "shutdown now", nil)
 	if err != nil {
 		// TODO Verify if shutdown error, otherwise return
 		logger.WarnContext(ctx, "shutdown returned error", "err", err)
 	}
 
-	// 8. Create Image from Server
-	logger.InfoContext(ctx, "# Step 8: Creating Image")
+	// 9. Create Image from Server
+	logger.InfoContext(ctx, "# Step 9: Creating Image")
 	createImageResult, _, err := s.c.Server.CreateImage(ctx, server, &hcloud.ServerCreateImageOpts{
 		Type:        hcloud.ImageTypeSnapshot,
 		Description: options.Description,
