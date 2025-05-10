@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.0](https://github.com/apricote/hcloud-upload-image/compare/v1.0.1...v1.1.0) (2025-05-10)
+
+
+### Features
+
+* smaller snapshots by zeroing disk first ([#101](https://github.com/apricote/hcloud-upload-image/issues/101)) ([fdfb284](https://github.com/apricote/hcloud-upload-image/commit/fdfb284533d3154806b0936c08015fd5cc64b0fb)), closes [#96](https://github.com/apricote/hcloud-upload-image/issues/96)
+
+
+### Bug Fixes
+
+* upload from local image generates broken command ([#98](https://github.com/apricote/hcloud-upload-image/issues/98)) ([420dcf9](https://github.com/apricote/hcloud-upload-image/commit/420dcf94c965ee470602db6c9c23c777fda91222)), closes [#97](https://github.com/apricote/hcloud-upload-image/issues/97)
+
 ## [1.0.1](https://github.com/apricote/hcloud-upload-image/compare/v1.0.0...v1.0.1) (2025-05-09)
 
 
