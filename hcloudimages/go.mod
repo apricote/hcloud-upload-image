@@ -6,7 +6,7 @@ toolchain go1.24.3
 
 require (
 	github.com/hetznercloud/hcloud-go/v2 v2.21.0
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.1
 	golang.org/x/crypto v0.37.0
 )
 
