@@ -1,4 +1,4 @@
-# `hcloud-upload-image`
+# hcloud-upload-image
 
 <p align="center">
   Quickly upload any raw disk images into your <a href="https://hetzner.com/cloud" target="_blank">Hetzner Cloud</a> projects!
@@ -13,26 +13,22 @@
 
 ## About
 
-The [Hetzner Cloud API](https://docs.hetzner.cloud/) does not support uploading disk images directly, and it only
-provides a limited set of default images. The only option for custom disk images that users have is by taking a
-"snapshot" of an existing servers root disk. These can then be used to create new servers.
+The [Hetzner Cloud API](https://docs.hetzner.cloud/) does not support uploading disk images directly and only provides a limited set of default images. The only option for custom disk images is to take a snapshot of an existing server’s root disk. These snapshots can then be used to create new servers.
 
-To create a completely custom disk image, users have to follow these steps:
+To create a completely custom disk image, users need to follow these steps:
 
-1. Create server with the correct server type
-2. Enable rescue system for the server
+1. Create a server with the correct server type
+2. Enable the rescue system for the server
 3. Boot the server
 4. Download the disk image from within the rescue system
-5. Write disk image to servers root disk
+5. Write the disk image to the server’s root disk
 6. Shut down the server
-7. Take a snapshot of the servers root disk
+7. Take a snapshot of the server’s root disk
 8. Delete the server
 
-This is an annoyingly long process. Many users have automated this with [Packer](https://www.packer.io/) &
-[`packer-plugin-hcloud`](https://github.com/hetznercloud/packer-plugin-hcloud/) before, but Packer offers a lot of
-additional complexity to wrap your head around.
+This is a frustratingly long process. Many users have automated it with [Packer](https://www.packer.io/) and [`packer-plugin-hcloud`](https://github.com/hetznercloud/packer-plugin-hcloud/), but Packer introduces additional complexity that can be difficult to manage.
 
-This repository provides a simple CLI tool & Go library to do the above.
+This repository provides a simple CLI tool and Go library to streamline the process.
 
 ## Getting Started
 
@@ -44,7 +40,7 @@ We provide pre-built `deb`, `rpm` and `apk` packages. Alternatively we also prov
 
 Check out the [GitHub release artifacts](https://github.com/apricote/hcloud-upload-image/releases/latest) for all of these files and archives.
 
-##### Arch Linux
+#### Arch Linux
 
 You can get [`hcloud-upload-image-bin`](https://aur.archlinux.org/packages/hcloud-upload-image-bin) from the AUR.
 
