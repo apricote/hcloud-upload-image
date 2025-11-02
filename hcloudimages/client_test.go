@@ -59,9 +59,9 @@ func TestAssembleCommand(t *testing.T) {
 			name: "remote bz2",
 			options: UploadOptions{
 				ImageURL:         mustParseURL("https://example.com/image.bz2"),
-				ImageCompression: CompressionXZ,
+				ImageCompression: CompressionBZ2,
 			},
-			want: "bash -c 'set -euo pipefail && wget --no-verbose -O - \"https://example.com/image.bz2\" | xz -cd | dd of=/dev/sda bs=4M && sync'",
+			want: "bash -c 'set -euo pipefail && wget --no-verbose -O - \"https://example.com/image.bz2\" | bzip2 -cd | dd of=/dev/sda bs=4M && sync'",
 		},
 		{
 			name: "local qcow2",
