@@ -49,6 +49,21 @@ func TestAssembleCommand(t *testing.T) {
 			want: "bash -c 'set -euo pipefail && wget --no-verbose -O - \"https://example.com/image.xz\" | xz -cd | dd of=/dev/sda bs=4M && sync'",
 		},
 		{
+			name: "local zstd",
+			options: UploadOptions{
+				ImageCompression: CompressionZSTD,
+			},
+			want: "bash -c 'set -euo pipefail && zstd -cd | dd of=/dev/sda bs=4M && sync'",
+		},
+		{
+			name: "remote zstd",
+			options: UploadOptions{
+				ImageURL:         mustParseURL("https://example.com/image.zst"),
+				ImageCompression: CompressionZSTD,
+			},
+			want: "bash -c 'set -euo pipefail && wget --no-verbose -O - \"https://example.com/image.zst\" | zstd -cd | dd of=/dev/sda bs=4M && sync'",
+		},
+		{
 			name: "local bz2",
 			options: UploadOptions{
 				ImageCompression: CompressionBZ2,
