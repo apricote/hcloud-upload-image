@@ -127,7 +127,7 @@ func init() {
 		cobra.FixedCompletions([]string{string(hcloudimages.CompressionBZ2), string(hcloudimages.CompressionXZ), string(hcloudimages.CompressionZSTD)}, cobra.ShellCompDirectiveNoFileComp),
 	)
 
-	uploadCmd.Flags().String(uploadFlagFormat, "", "Format of the image. [choices: qcow2]")
+	uploadCmd.Flags().String(uploadFlagFormat, "", "Format of the image. [default: raw, choices: qcow2]")
 	_ = uploadCmd.RegisterFlagCompletionFunc(
 		uploadFlagFormat,
 		cobra.FixedCompletions([]string{string(hcloudimages.FormatQCOW2)}, cobra.ShellCompDirectiveNoFileComp),
