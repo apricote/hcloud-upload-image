@@ -34,7 +34,7 @@ hcloud-upload-image upload (--image-path=<local-path> | --image-url=<url>) --arc
 
 ```
       --architecture string     CPU architecture of the disk image [choices: x86, arm]
-      --compression string      Type of compression that was used on the disk image [choices: bz2, xz]
+      --compression string      Type of compression that was used on the disk image [choices: bz2, xz, zstd]
       --description string      Description for the resulting image
       --format string           Format of the image. [choices: qcow2]
   -h, --help                    help for upload
