@@ -34,7 +34,7 @@ var (
 	}
 
 	serverTypePerArchitecture = map[hcloud.Architecture]*hcloud.ServerType{
-		hcloud.ArchitectureX86: {Name: "cx22"},
+		hcloud.ArchitectureX86: {Name: "cx23"},
 		hcloud.ArchitectureARM: {Name: "cax11"},
 	}
 
