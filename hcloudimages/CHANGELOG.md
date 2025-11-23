@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.2.0](https://github.com/apricote/hcloud-upload-image/compare/hcloudimages/v1.1.0...hcloudimages/v1.2.0) (2025-11-06)
+
+
+### Features
+
+* change minimum required Go version to 1.24 ([#130](https://github.com/apricote/hcloud-upload-image/issues/130)) ([5eba2d5](https://github.com/apricote/hcloud-upload-image/commit/5eba2d52fe3aafb4fd0d93403548f4c32bc2b5ac))
+* support zstd compression ([#125](https://github.com/apricote/hcloud-upload-image/issues/125)) ([37ebbce](https://github.com/apricote/hcloud-upload-image/commit/37ebbce5179997ac216af274055fc34c777b01e6)), closes [#122](https://github.com/apricote/hcloud-upload-image/issues/122)
+* update default x86 server type to cx23 ([#129](https://github.com/apricote/hcloud-upload-image/issues/129)) ([a205619](https://github.com/apricote/hcloud-upload-image/commit/a20561944d0ba9485a6e10e99df15c56a688541d))
+
 ## [1.1.0](https://github.com/apricote/hcloud-upload-image/compare/hcloudimages/v1.0.1...hcloudimages/v1.1.0) (2025-05-10)
 
 

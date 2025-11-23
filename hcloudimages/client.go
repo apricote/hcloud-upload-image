@@ -34,7 +34,7 @@ var (
 	}
 
 	serverTypePerArchitecture = map[hcloud.Architecture]*hcloud.ServerType{
-		hcloud.ArchitectureX86: {Name: "cx22"},
+		hcloud.ArchitectureX86: {Name: "cx23"},
 		hcloud.ArchitectureARM: {Name: "cax11"},
 	}
 
@@ -104,9 +104,10 @@ const (
 	CompressionNone Compression = ""
 	CompressionBZ2  Compression = "bz2"
 	CompressionXZ   Compression = "xz"
+	CompressionZSTD Compression = "zstd"
 
 	// Possible future additions:
-	// zip,zstd
+	// zip
 )
 
 type Format string
@@ -524,6 +525,8 @@ func assembleCommand(options UploadOptions) (string, error) {
 			cmd += "bzip2 -cd | "
 		case CompressionXZ:
 			cmd += "xz -cd | "
+		case CompressionZSTD:
+			cmd += "zstd -cd | "
 		default:
 			return "", fmt.Errorf("unknown compression: %q", options.ImageCompression)
 		}

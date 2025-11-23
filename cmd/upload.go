@@ -121,13 +121,13 @@ func init() {
 	uploadCmd.MarkFlagsMutuallyExclusive(uploadFlagImageURL, uploadFlagImagePath)
 	uploadCmd.MarkFlagsOneRequired(uploadFlagImageURL, uploadFlagImagePath)
 
-	uploadCmd.Flags().String(uploadFlagCompression, "", "Type of compression that was used on the disk image [choices: bz2, xz]")
+	uploadCmd.Flags().String(uploadFlagCompression, "", "Type of compression that was used on the disk image [choices: bz2, xz, zstd]")
 	_ = uploadCmd.RegisterFlagCompletionFunc(
 		uploadFlagCompression,
-		cobra.FixedCompletions([]string{string(hcloudimages.CompressionBZ2), string(hcloudimages.CompressionXZ)}, cobra.ShellCompDirectiveNoFileComp),
+		cobra.FixedCompletions([]string{string(hcloudimages.CompressionBZ2), string(hcloudimages.CompressionXZ), string(hcloudimages.CompressionZSTD)}, cobra.ShellCompDirectiveNoFileComp),
 	)
 
-	uploadCmd.Flags().String(uploadFlagFormat, "", "Format of the image. [choices: qcow2]")
+	uploadCmd.Flags().String(uploadFlagFormat, "", "Format of the image. [default: raw, choices: qcow2]")
 	_ = uploadCmd.RegisterFlagCompletionFunc(
 		uploadFlagFormat,
 		cobra.FixedCompletions([]string{string(hcloudimages.FormatQCOW2)}, cobra.ShellCompDirectiveNoFileComp),
