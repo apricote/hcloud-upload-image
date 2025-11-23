@@ -58,6 +58,63 @@ If you already have a recent Go toolchain installed, you can build & install the
 go install github.com/apricote/hcloud-upload-image@latest
 ```
 
+#### Nix/NixOS
+
+To run directly without installing (assumes flakes are enabled):
+
+```shell
+# Run the application directly
+nix run github:apricote/hcloud-upload-image
+
+# Start a shell with `hcloud-upload-image` in $PATH
+nix shell github:apricote/hcloud-upload-image
+```
+
+To install on your system (assumes flakes are enabled):
+
+```nix
+# flake.nix
+{
+  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+  inputs.hcloud-upload-image.url = "github:apricote/hcloud-upload-image";
+  inputs.hcloud-upload-image.inputs.nixpkgs.follows = "nixpkgs";
+
+  outputs = { self, nixpkgs, hcloud-upload-image }: {
+    nixosConfigurations.my-system = nixpkgs.lib.nixosSystem {
+      system = "x86_64-linux";
+      modules = [
+        ./configuration.nix
+        {
+          environment.systemPackages = [
+            hcloud-upload-image.packages.x86_64-linux.default
+          ];
+        }
+      ];
+    };
+  };
+}
+```
+
+To install on your system (using a non-flake version manager):
+
+```shell
+# Using npins
+npins add github apricote hcloud-upload-image
+
+# Using niv
+niv add apricote/hcloud-upload-image
+```
+
+Then in your Nix expressions:
+
+```nix
+let
+  sources = import ./npins;             # For npins
+  # sources = import ./nix/sources.nix; # For niv
+in
+(pkgs.callPackage sources.hcloud-upload-image {})
+```
+
 #### Docker
 
 There is a docker image published at `ghcr.io/apricote/hcloud-upload-image`.
