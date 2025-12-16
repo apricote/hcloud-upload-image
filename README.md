@@ -73,7 +73,8 @@ export HCLOUD_TOKEN="<your token>"
 hcloud-upload-image upload \
   --image-url "https://example.com/disk-image-x86.raw.bz2" \
   --architecture x86 \
-  --compression bz2
+  --compression bz2 \
+  --location nbg1  # Optional: defaults to fsn1
 ```
 
 To learn more, you can use the embedded help output or check out the [CLI help pages in this repository](docs/reference/cli/hcloud-upload-image.md).:
@@ -123,6 +124,7 @@ func main() {
 		ImageURL:         imageURL,
 		ImageCompression: hcloudimages.CompressionBZ2,
 		Architecture:     hcloud.ArchitectureX86,
+		Location:         &hcloud.Location{Name: "nbg1"}, // Optional: defaults to fsn1
 	})
 	if err != nil {
 		panic(err)

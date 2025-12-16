@@ -94,6 +94,10 @@ type UploadOptions struct {
 	// We also always add a label `apricote.de/created-by=hcloud-image-upload` ([CreatedByLabel], [CreatedByValue]).
 	Labels map[string]string
 
+	// Location is the datacenter location for the temporary server.
+	// Defaults to fsn1 if not specified.
+	Location *hcloud.Location
+
 	// DebugSkipResourceCleanup will skip the cleanup of the temporary SSH Key and Server.
 	DebugSkipResourceCleanup bool
 }
@@ -214,9 +218,14 @@ func (s *Client) Upload(ctx context.Context, options UploadOptions) (*hcloud.Ima
 		}
 	}
 
+	location := defaultLocation
+	if options.Location != nil {
+		location = options.Location
+	}
+
 	logger.DebugContext(ctx, "creating server with config",
 		"image", defaultImage.Name,
-		"location", defaultLocation.Name,
+		"location", location.Name,
 		"serverType", serverType.Name,
 	)
 	serverCreateResult, _, err := s.c.Server.Create(ctx, hcloud.ServerCreateOpts{
@@ -230,7 +239,7 @@ func (s *Client) Upload(ctx context.Context, options UploadOptions) (*hcloud.Ima
 		StartAfterCreate: hcloud.Ptr(false),
 		// Image will never be booted, we only boot into rescue system
 		Image:    defaultImage,
-		Location: defaultLocation,
+		Location: location,
 		Labels:   labels,
 	})
 	if err != nil {
