@@ -84,6 +84,10 @@ type UploadOptions struct {
 	//   - The default server type is no longer available, or not temporarily out of stock.
 	ServerType *hcloud.ServerType
 
+	// Location can be optionally set to override the default location.
+	// This is useful is the default location is unavailable.
+	Location *hcloud.Location
+
 	// Description is an optional description that the resulting image (snapshot) will have. There is no way to
 	// select images by its description, you should use Labels if you need  to identify your image later.
 	Description *string
@@ -214,9 +218,16 @@ func (s *Client) Upload(ctx context.Context, options UploadOptions) (*hcloud.Ima
 		}
 	}
 
+	var location *hcloud.Location
+	if options.Location != nil {
+		location = options.Location
+	} else {
+		location = defaultLocation
+	}
+
 	logger.DebugContext(ctx, "creating server with config",
 		"image", defaultImage.Name,
-		"location", defaultLocation.Name,
+		"location", location.Name,
 		"serverType", serverType.Name,
 	)
 	serverCreateResult, _, err := s.c.Server.Create(ctx, hcloud.ServerCreateOpts{
@@ -230,7 +241,7 @@ func (s *Client) Upload(ctx context.Context, options UploadOptions) (*hcloud.Ima
 		StartAfterCreate: hcloud.Ptr(false),
 		// Image will never be booted, we only boot into rescue system
 		Image:    defaultImage,
-		Location: defaultLocation,
+		Location: location,
 		Labels:   labels,
 	})
 	if err != nil {

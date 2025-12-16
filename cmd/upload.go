@@ -21,6 +21,7 @@ const (
 	uploadFlagFormat       = "format"
 	uploadFlagArchitecture = "architecture"
 	uploadFlagServerType   = "server-type"
+	uploadFlagLocation     = "location"
 	uploadFlagDescription  = "description"
 	uploadFlagLabels       = "labels"
 )
@@ -52,6 +53,7 @@ var uploadCmd = &cobra.Command{
 		imageFormat, _ := cmd.Flags().GetString(uploadFlagFormat)
 		architecture, _ := cmd.Flags().GetString(uploadFlagArchitecture)
 		serverType, _ := cmd.Flags().GetString(uploadFlagServerType)
+		location, _ := cmd.Flags().GetString(uploadFlagLocation)
 		description, _ := cmd.Flags().GetString(uploadFlagDescription)
 		labels, _ := cmd.Flags().GetStringToString(uploadFlagLabels)
 
@@ -102,6 +104,10 @@ var uploadCmd = &cobra.Command{
 			options.ServerType = &hcloud.ServerType{Name: serverType}
 		}
 
+		if location != "" {
+			options.Location = &hcloud.Location{Name: location}
+		}
+
 		image, err := client.Upload(ctx, options)
 		if err != nil {
 			return fmt.Errorf("failed to upload the image: %w", err)
@@ -140,6 +146,7 @@ func init() {
 	)
 
 	uploadCmd.Flags().String(uploadFlagServerType, "", "Explicitly use this server type to generate the image. Mutually exclusive with --architecture.")
+	uploadCmd.Flags().String(uploadFlagLocation, "", "Explicitly use this location to generate the image.")
 
 	// Only one of them needs to be set
 	uploadCmd.MarkFlagsOneRequired(uploadFlagArchitecture, uploadFlagServerType)
