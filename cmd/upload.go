@@ -23,6 +23,7 @@ const (
 	uploadFlagServerType   = "server-type"
 	uploadFlagDescription  = "description"
 	uploadFlagLabels       = "labels"
+	uploadFlagLocation     = "location"
 )
 
 //go:embed upload.md
@@ -54,6 +55,7 @@ var uploadCmd = &cobra.Command{
 		serverType, _ := cmd.Flags().GetString(uploadFlagServerType)
 		description, _ := cmd.Flags().GetString(uploadFlagDescription)
 		labels, _ := cmd.Flags().GetStringToString(uploadFlagLabels)
+		location, _ := cmd.Flags().GetString(uploadFlagLocation)
 
 		options := hcloudimages.UploadOptions{
 			ImageCompression: hcloudimages.Compression(imageCompression),
@@ -102,6 +104,10 @@ var uploadCmd = &cobra.Command{
 			options.ServerType = &hcloud.ServerType{Name: serverType}
 		}
 
+		if location != "" {
+			options.Location = &hcloud.Location{Name: location}
+		}
+
 		image, err := client.Upload(ctx, options)
 		if err != nil {
 			return fmt.Errorf("failed to upload the image: %w", err)
@@ -148,4 +154,10 @@ func init() {
 	uploadCmd.Flags().String(uploadFlagDescription, "", "Description for the resulting image")
 
 	uploadCmd.Flags().StringToString(uploadFlagLabels, map[string]string{}, "Labels for the resulting image")
+
+	uploadCmd.Flags().String(uploadFlagLocation, "", "Datacenter location for the temporary server [default: fsn1, choices: fsn1, nbg1, hel1, ash, hil, sin]")
+	_ = uploadCmd.RegisterFlagCompletionFunc(
+		uploadFlagLocation,
+		cobra.FixedCompletions([]string{"fsn1", "nbg1", "hel1", "ash", "hil", "sin"}, cobra.ShellCompDirectiveNoFileComp),
+	)
 }

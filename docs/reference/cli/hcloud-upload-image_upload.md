@@ -41,6 +41,7 @@ hcloud-upload-image upload (--image-path=<local-path> | --image-url=<url>) --arc
       --image-path string       Local path to the disk image that should be uploaded
       --image-url string        Remote URL of the disk image that should be uploaded
       --labels stringToString   Labels for the resulting image (default [])
+      --location string         Datacenter location for the temporary server [default: fsn1, choices: fsn1, nbg1, hel1, ash, hil, sin]
       --server-type string      Explicitly use this server type to generate the image. Mutually exclusive with --architecture.
 ```
 

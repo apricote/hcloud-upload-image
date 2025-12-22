@@ -24,6 +24,7 @@ func ExampleClient_Upload() {
 		ImageURL:         imageURL,
 		ImageCompression: hcloudimages.CompressionBZ2,
 		Architecture:     hcloud.ArchitectureX86,
+		Location:         &hcloud.Location{Name: "nbg1"}, // Optional: defaults to fsn1
 	})
 	if err != nil {
 		panic(err)
