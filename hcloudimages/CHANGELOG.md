@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/apricote/hcloud-upload-image/compare/hcloudimages/v1.2.0...hcloudimages/v1.3.0) (2025-12-22)
+
+
+### Features
+
+* add --location flag to specify datacenter region ([#141](https://github.com/apricote/hcloud-upload-image/issues/141)) ([fcbc14a](https://github.com/apricote/hcloud-upload-image/commit/fcbc14aab6d495d2c67d653f9ea1ff56a39a8c2f)), closes [#142](https://github.com/apricote/hcloud-upload-image/issues/142)
+
 ## [1.2.0](https://github.com/apricote/hcloud-upload-image/compare/hcloudimages/v1.1.0...hcloudimages/v1.2.0) (2025-11-06)
 
 
