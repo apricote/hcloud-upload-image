@@ -11,12 +11,15 @@
     "gomodTidy",
     "gomodUpdateImportPaths"
   ],
-  "goGetDirs": ["./...", "./hcloudimages/..."],
+  "goGetDirs": [
+    "./...",
+    "./hcloudimages/..."
+  ],
   "customManagers": [
     {
       "customType": "regex",
-      "fileMatch": [
-        "^\\.github\\/(?:workflows|actions)\\/.+\\.ya?ml$"
+      "managerFilePatterns": [
+        "/^\\.github\\/(?:workflows|actions)\\/.+\\.ya?ml$/"
       ],
       "matchStrings": [
         "(?:version|VERSION): (?<currentValue>.+) # renovate: datasource=(?<datasource>[a-z-]+) depName=(?<depName>.+)(?: packageName=(?<packageName>.+))?(?: versioning=(?<versioning>[a-z-]+))?"
