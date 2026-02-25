@@ -12,18 +12,51 @@ import (
 // https://github.com/golang/example/blob/32022caedd6a177a7717aa8680cbe179e1045935/slog-handler-guide/README.md
 
 const (
-	ansiClear      = "\033[0m"
-	ansiBold       = "\033[1m"
-	ansiBoldYellow = "\033[1;93m"
-	ansiBoldRed    = "\033[1;31m"
-	ansiThinGray   = "\033[2;37m"
+	// ANSI escape codes
+	reset = "\033[0m"
+	bold  = "\033[1m"
+
+	// ANSI 256-color codes (closest matches to the hex colors)
+	// Primary (Purple #7D56F4) -> 99
+	primaryColor = "\033[38;5;99m"
+	// Success (Green #04B575) -> 36
+	successColor = "\033[38;5;36m"
+	// Warning (Amber #FFAA00) -> 214
+	warningColor = "\033[38;5;214m"
+	// Error (Red #FF5F87) -> 204
+	errorColor = "\033[38;5;204m"
+	// Muted (Gray #626262) -> 241
+	mutedColor = "\033[38;5;241m"
+	// Info (White #FAFAFA) -> 231
+	infoColor = "\033[38;5;231m"
+)
+
+var (
+	// Style functions that apply ANSI codes
+	stepHeaderStyle = func(s string) string { return bold + primaryColor + s + reset }
+	infoStyle       = func(s string) string { return bold + infoColor + s + reset }
+	successStyle    = func(s string) string { return bold + successColor + s + reset }
+	debugStyle      = func(s string) string { return mutedColor + s + reset }
+	warnStyle       = func(s string) string { return bold + warningColor + s + reset }
+	errorStyle      = func(s string) string { return bold + errorColor + s + reset }
+	attrStyle       = func(s string) string { return mutedColor + s + reset }
+
+	// Icons
+	stepIcon     = "▶"
+	successIcon  = "✓"
+	warningIcon  = "⚠"
+	errorIcon    = "✗"
+	cleanupIcon  = "🧹"
+	skipIcon     = "⏭"
+	completeIcon = "✓"
 )
 
 type Handler struct {
-	opts HandlerOptions
-	goas []groupOrAttrs
-	mu   *sync.Mutex
-	out  io.Writer
+	opts      HandlerOptions
+	goas      []groupOrAttrs
+	mu        *sync.Mutex
+	out       io.Writer
+	seenAttrs map[string]string // Track seen attribute key-value pairs to reduce noise
 }
 
 // HandlerOptions are a subset of [slog.HandlerOptions] that are implemented for the UI handler.
@@ -73,8 +106,9 @@ var _ slog.Handler = &Handler{}
 
 func NewHandler(out io.Writer, opts *HandlerOptions) *Handler {
 	h := &Handler{
-		out: out,
-		mu:  &sync.Mutex{},
+		out:       out,
+		mu:        &sync.Mutex{},
+		seenAttrs: make(map[string]string),
 	}
 	if opts != nil {
 		h.opts = *opts
@@ -92,54 +126,132 @@ func (h *Handler) Enabled(_ context.Context, level slog.Level) bool {
 func (h *Handler) Handle(_ context.Context, record slog.Record) error {
 	buf := make([]byte, 0, 512)
 
-	formattingPrefix := ""
-
-	switch record.Level {
-	case slog.LevelInfo:
-		formattingPrefix = ansiBold
-	case slog.LevelWarn:
-		// Bold + Yellow
-		formattingPrefix = ansiBoldYellow
-	case slog.LevelError:
-		// Bold + Red
-		formattingPrefix = ansiBoldRed
-	}
-
-	// Print main message in formatted text
-	buf = fmt.Appendf(buf, "%s%s%s", formattingPrefix, record.Message, ansiClear)
-
-	// Add attributes in thin gray
-	buf = fmt.Append(buf, ansiThinGray)
-
-	// Attributes from [WithGroup] and [WithAttrs] calls
-	goas := h.goas
-	if record.NumAttrs() == 0 {
-		for len(goas) > 0 && goas[len(goas)-1].group != "" {
-			goas = goas[:len(goas)-1]
-		}
-	}
-	group := ""
-	for _, goa := range goas {
-		if goa.group != "" {
-			group = goa.group
-		} else {
-			for _, a := range goa.attrs {
-				buf = h.appendAttr(buf, group, a)
-			}
-		}
-	}
+	// Extract structured attributes for styling decisions
+	var logType, status, event string
+	var step int
 
 	record.Attrs(func(a slog.Attr) bool {
-		buf = h.appendAttr(buf, group, a)
+		switch a.Key {
+		case "log.type":
+			logType = a.Value.String()
+		case "status":
+			status = a.Value.String()
+		case "event":
+			event = a.Value.String()
+		case "step":
+			step = int(a.Value.Int64())
+		}
 		return true
 	})
 
-	buf = fmt.Appendf(buf, "%s\n", ansiClear)
+	// Determine the style and icon based on structured attributes
+	var styleFunc func(string) string
+	var icon string
+	var prefix string
+
+	switch logType {
+	case "step":
+		styleFunc = stepHeaderStyle
+		icon = stepIcon
+		prefix = fmt.Sprintf("Step %d: ", step)
+	case "cleanup":
+		if record.Level == slog.LevelWarn {
+			styleFunc = warnStyle
+			icon = warningIcon
+		} else if event == "skip" {
+			styleFunc = debugStyle
+			icon = skipIcon
+		} else {
+			styleFunc = debugStyle
+			icon = cleanupIcon
+		}
+	case "result":
+		switch status {
+		case "success":
+			styleFunc = successStyle
+			icon = successIcon
+		case "failure":
+			styleFunc = errorStyle
+			icon = errorIcon
+		default:
+			styleFunc = infoStyle
+		}
+	case "event":
+		if event == "complete" {
+			styleFunc = successStyle
+			icon = completeIcon
+		} else {
+			styleFunc = infoStyle
+		}
+	default:
+		// Fall back to level-based styling
+		switch record.Level {
+		case slog.LevelWarn:
+			styleFunc = warnStyle
+			icon = warningIcon
+		case slog.LevelError:
+			styleFunc = errorStyle
+			icon = errorIcon
+		case slog.LevelInfo:
+			styleFunc = infoStyle
+		case slog.LevelDebug:
+			styleFunc = debugStyle
+		default:
+			styleFunc = infoStyle
+		}
+	}
+
+	// Render the main message with styling
+	if icon != "" {
+		buf = fmt.Appendf(buf, "%s ", icon)
+	}
+
+	msg := prefix + record.Message
+	styledMsg := styleFunc(msg)
+	buf = append(buf, []byte(styledMsg)...)
+
+	// Add attributes if present (filtering out our special attributes)
+	if record.NumAttrs() > 0 {
+		// Attributes from [WithGroup] and [WithAttrs] calls
+		goas := h.goas
+		if record.NumAttrs() == 0 {
+			for len(goas) > 0 && goas[len(goas)-1].group != "" {
+				goas = goas[:len(goas)-1]
+			}
+		}
+		group := ""
+		for _, goa := range goas {
+			if goa.group != "" {
+				group = goa.group
+			} else {
+				for _, a := range goa.attrs {
+					if !h.isSpecialAttr(a.Key) {
+						buf = h.appendAttr(buf, group, a)
+					}
+				}
+			}
+		}
+
+		record.Attrs(func(a slog.Attr) bool {
+			if !h.isSpecialAttr(a.Key) {
+				buf = h.appendAttr(buf, group, a)
+			}
+			return true
+		})
+	}
+
+	buf = append(buf, '\n')
 
 	h.mu.Lock()
 	defer h.mu.Unlock()
 	_, err := h.out.Write(buf)
 	return err
+}
+
+// isSpecialAttr returns true if the attribute is used for styling and shouldn't be displayed
+func (h *Handler) isSpecialAttr(key string) bool {
+	return key == "log.type" || key == "step" || key == "step.name" ||
+		key == "event" || key == "status"
 }
 
 func (h *Handler) appendAttr(buf []byte, group string, a slog.Attr) []byte {
@@ -154,22 +266,44 @@ func (h *Handler) appendAttr(buf []byte, group string, a slog.Attr) []byte {
 		return buf
 	}
 
+	// Build the full key (with group if present)
+	fullKey := a.Key
+	if group != "" {
+		fullKey = group + "." + a.Key
+	}
+
+	// Check if we've seen this attribute with the same value before
+	valueStr := a.Value.String()
+	if prevValue, seen := h.seenAttrs[fullKey]; seen && prevValue == valueStr {
+		// Skip attributes that haven't changed
+		return buf
+	}
+
+	// Update the seen attributes map
+	h.seenAttrs[fullKey] = valueStr
+
 	if group != "" {
 		group += "."
 	}
 
+	// Format the attribute with styling
+	var attrStr string
 	switch a.Value.Kind() {
 	case slog.KindString:
-		buf = fmt.Appendf(buf, " %s%s=%q", group, a.Key, a.Value)
+		attrStr = fmt.Sprintf(" %s%s=%q", group, a.Key, a.Value)
 	case slog.KindAny:
 		if err, ok := a.Value.Any().(error); ok {
-			buf = fmt.Appendf(buf, " %s%s=%q", group, a.Key, err.Error())
+			attrStr = fmt.Sprintf(" %s%s=%q", group, a.Key, err.Error())
 		} else {
-			buf = fmt.Appendf(buf, " %s%s=%s", group, a.Key, a.Value)
+			attrStr = fmt.Sprintf(" %s%s=%s", group, a.Key, a.Value)
 		}
 	default:
-		buf = fmt.Appendf(buf, " %s%s=%s", group, a.Key, a.Value)
+		attrStr = fmt.Sprintf(" %s%s=%s", group, a.Key, a.Value)
 	}
+
+	// Apply styling to the attribute
+	styledAttr := attrStyle(attrStr)
+	buf = append(buf, []byte(styledAttr)...)
 
 	return buf
 }

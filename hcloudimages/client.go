@@ -174,11 +174,20 @@ func (s *Client) Upload(ctx context.Context, options UploadOptions) (*hcloud.Ima
 	}
 
 	// 1. Create SSH Key
-	logger.InfoContext(ctx, "# Step 1: Generating SSH Key")
+	logger.InfoContext(ctx, "Generating SSH Key",
+		"log.type", "step",
+		"step", 1,
+		"step.name", "generate-ssh-key",
+	)
 	privateKey, publicKey, err := sshutil.GenerateKeyPair()
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate temporary ssh key pair: %w", err)
 	}
+
+	logger.InfoContext(ctx, "ssh key generated",
+		"log.type", "event",
+		"event", "complete",
+	)
 
 	key, _, err := s.c.SSHKey.Create(ctx, hcloud.SSHKeyCreateOpts{
 		Name:      resourceName,
@@ -188,25 +197,45 @@ func (s *Client) Upload(ctx context.Context, options UploadOptions) (*hcloud.Ima
 	if err != nil {
 		return nil, fmt.Errorf("failed to submit temporary ssh key to API: %w", err)
 	}
-	logger.DebugContext(ctx, "Uploaded ssh key", "ssh-key-id", key.ID)
+	logger.InfoContext(ctx, "ssh key uploaded to API",
+		"log.type", "event",
+		"event", "complete",
+		"ssh-key-id", key.ID,
+	)
 	defer func() {
 		// Cleanup SSH Key
 		if options.DebugSkipResourceCleanup {
-			logger.InfoContext(ctx, "Cleanup: Skipping cleanup of temporary ssh key")
+			logger.InfoContext(ctx, "skipping cleanup of temporary ssh key",
+				"log.type", "cleanup",
+				"event", "skip",
+				"resource", "ssh-key",
+			)
 			return
 		}
 
-		logger.InfoContext(ctx, "Cleanup: Deleting temporary ssh key")
+		logger.InfoContext(ctx, "deleting temporary ssh key",
+			"log.type", "cleanup",
+			"resource", "ssh-key",
+		)
 
 		_, err := s.c.SSHKey.Delete(ctx, key)
 		if err != nil {
-			logger.WarnContext(ctx, "Cleanup: ssh key could not be deleted", "error", err)
+			logger.WarnContext(ctx, "ssh key could not be deleted",
+				"log.type", "cleanup",
+				"status", "failure",
+				"resource", "ssh-key",
+				"error", err,
+			)
 			// TODO
 		}
 	}()
 
 	// 2. Create Server
-	logger.InfoContext(ctx, "# Step 2: Creating Server")
+	logger.InfoContext(ctx, "Creating Server",
+		"log.type", "step",
+		"step", 2,
+		"step.name", "create-server",
+	)
 	var serverType *hcloud.ServerType
 	if options.ServerType != nil {
 		serverType = options.ServerType
@@ -223,10 +252,10 @@ func (s *Client) Upload(ctx context.Context, options UploadOptions) (*hcloud.Ima
 		location = options.Location
 	}
 
-	logger.DebugContext(ctx, "creating server with config",
+	logger.DebugContext(ctx, "creating server",
 		"image", defaultImage.Name,
 		"location", location.Name,
-		"serverType", serverType.Name,
+		"server-type", serverType.Name,
 	)
 	serverCreateResult, _, err := s.c.Server.Create(ctx, hcloud.ServerCreateOpts{
 		Name:       resourceName,
@@ -246,33 +275,55 @@ func (s *Client) Upload(ctx context.Context, options UploadOptions) (*hcloud.Ima
 		return nil, fmt.Errorf("creating the temporary server failed: %w", err)
 	}
 	logger = logger.With("server", serverCreateResult.Server.ID)
-	logger.DebugContext(ctx, "Created Server")
+	logger.InfoContext(ctx, "server created",
+		"log.type", "event",
+		"event", "complete",
+	)
 
-	logger.DebugContext(ctx, "waiting on actions")
+	logger.DebugContext(ctx, "waiting for server creation actions")
 	err = s.c.Action.WaitFor(ctx, append(serverCreateResult.NextActions, serverCreateResult.Action)...)
 	if err != nil {
 		return nil, fmt.Errorf("creating the temporary server failed: %w", err)
 	}
-	logger.DebugContext(ctx, "actions finished")
+	logger.InfoContext(ctx, "server create actions completed",
+		"log.type", "event",
+		"event", "complete",
+	)
 
 	server := serverCreateResult.Server
 	defer func() {
 		// Cleanup Server
 		if options.DebugSkipResourceCleanup {
-			logger.InfoContext(ctx, "Cleanup: Skipping cleanup of temporary server")
+			logger.InfoContext(ctx, "skipping cleanup of temporary server",
+				"log.type", "cleanup",
+				"event", "skip",
+				"resource", "server",
+			)
 			return
 		}
 
-		logger.InfoContext(ctx, "Cleanup: Deleting temporary server")
+		logger.InfoContext(ctx, "deleting temporary server",
+			"log.type", "cleanup",
+			"resource", "server",
+		)
 
 		_, _, err := s.c.Server.DeleteWithResult(ctx, server)
 		if err != nil {
-			logger.WarnContext(ctx, "Cleanup: server could not be deleted", "error", err)
+			logger.WarnContext(ctx, "server could not be deleted",
+				"log.type", "cleanup",
+				"status", "failure",
+				"resource", "server",
+				"error", err,
+			)
 		}
 	}()
 
 	// 3. Activate Rescue System
-	logger.InfoContext(ctx, "# Step 3: Activating Rescue System")
+	logger.InfoContext(ctx, "Activating Rescue System",
+		"log.type", "step",
+		"step", 3,
+		"step.name", "activate-rescue",
+	)
 	enableRescueResult, _, err := s.c.Server.EnableRescue(ctx, server, hcloud.ServerEnableRescueOpts{
 		Type:    defaultRescueType,
 		SSHKeys: []*hcloud.SSHKey{key},
@@ -281,31 +332,45 @@ func (s *Client) Upload(ctx context.Context, options UploadOptions) (*hcloud.Ima
 		return nil, fmt.Errorf("enabling the rescue system on the temporary server failed: %w", err)
 	}
 
-	logger.DebugContext(ctx, "rescue system requested, waiting on action")
+	logger.DebugContext(ctx, "rescue system requested, waiting for action")
 
 	err = s.c.Action.WaitFor(ctx, enableRescueResult.Action)
 	if err != nil {
 		return nil, fmt.Errorf("enabling the rescue system on the temporary server failed: %w", err)
 	}
-	logger.DebugContext(ctx, "action finished, rescue system enabled")
+	logger.InfoContext(ctx, "rescue system activated",
+		"log.type", "event",
+		"event", "complete",
+	)
 
 	// 4. Boot Server
-	logger.InfoContext(ctx, "# Step 4: Booting Server")
+	logger.InfoContext(ctx, "Booting Server",
+		"log.type", "step",
+		"step", 4,
+		"step.name", "boot-server",
+	)
 	powerOnAction, _, err := s.c.Server.Poweron(ctx, server)
 	if err != nil {
 		return nil, fmt.Errorf("starting the temporary server failed: %w", err)
 	}
 
-	logger.DebugContext(ctx, "boot requested, waiting on action")
+	logger.DebugContext(ctx, "boot requested, waiting for action")
 
 	err = s.c.Action.WaitFor(ctx, powerOnAction)
 	if err != nil {
 		return nil, fmt.Errorf("starting the temporary server failed: %w", err)
 	}
-	logger.DebugContext(ctx, "action finished, server is booting")
+	logger.InfoContext(ctx, "server booted",
+		"log.type", "event",
+		"event", "complete",
+	)
 
 	// 5. Open SSH Session
-	logger.InfoContext(ctx, "# Step 5: Opening SSH Connection")
+	logger.InfoContext(ctx, "Opening SSH Connection",
+		"log.type", "step",
+		"step", 5,
+		"step.name", "connect-ssh",
+	)
 	signer, err := ssh.ParsePrivateKey(privateKey)
 	if err != nil {
 		return nil, fmt.Errorf("parsing the automatically generated temporary private key failed: %w", err)
@@ -338,43 +403,74 @@ func (s *Client) Upload(ctx context.Context, options UploadOptions) (*hcloud.Ima
 		return nil, fmt.Errorf("failed to ssh into temporary server: %w", err)
 	}
 	defer func() { _ = sshClient.Close() }()
+	logger.InfoContext(ctx, "ssh connection established",
+		"log.type", "event",
+		"event", "complete",
+	)
 
 	// 6. Wipe existing disk, to avoid storing any bytes from it in the snapshot
-	logger.InfoContext(ctx, "# Step 6: Cleaning existing disk")
+	logger.InfoContext(ctx, "Cleaning existing disk",
+		"log.type", "step",
+		"step", 6,
+		"step.name", "clean-disk",
+	)
 
 	output, err := sshsession.Run(sshClient, "blkdiscard /dev/sda", nil)
 	logger.DebugContext(ctx, string(output))
 	if err != nil {
 		return nil, fmt.Errorf("failed to clean existing disk: %w", err)
 	}
+	logger.InfoContext(ctx, "disk cleaned",
+		"log.type", "event",
+		"event", "complete",
+	)
 
 	// 7. SSH On Server: Download Image, Decompress, Write to Root Disk
-	logger.InfoContext(ctx, "# Step 7: Downloading image and writing to disk")
+	logger.InfoContext(ctx, "Writing image to disk",
+		"log.type", "step",
+		"step", 7,
+		"step.name", "write-image",
+	)
 
 	cmd, err := assembleCommand(options)
 	if err != nil {
 		return nil, err
 	}
 
-	logger.DebugContext(ctx, "running download, decompress and write to disk command", "cmd", cmd)
+	logger.DebugContext(ctx, "running image write command", "cmd", cmd)
 
 	output, err = sshsession.Run(sshClient, cmd, options.ImageReader)
-	logger.InfoContext(ctx, "# Step 7: Finished writing image to disk")
 	logger.DebugContext(ctx, string(output))
 	if err != nil {
 		return nil, fmt.Errorf("failed to download and write the image: %w", err)
 	}
+	logger.InfoContext(ctx, "image written to disk",
+		"log.type", "event",
+		"event", "complete",
+	)
 
 	// 8. SSH On Server: Shutdown
-	logger.InfoContext(ctx, "# Step 8: Shutting down server")
+	logger.InfoContext(ctx, "Shutting down server",
+		"log.type", "step",
+		"step", 8,
+		"step.name", "shutdown-server",
+	)
 	_, err = sshsession.Run(sshClient, "shutdown now", nil)
 	if err != nil {
 		// TODO Verify if shutdown error, otherwise return
-		logger.WarnContext(ctx, "shutdown returned error", "err", err)
+		logger.WarnContext(ctx, "shutdown returned error", "error", err)
 	}
+	logger.InfoContext(ctx, "server shutdown initiated",
+		"log.type", "event",
+		"event", "complete",
+	)
 
 	// 9. Create Image from Server
-	logger.InfoContext(ctx, "# Step 9: Creating Image")
+	logger.InfoContext(ctx, "Creating snapshot",
+		"log.type", "step",
+		"step", 9,
+		"step.name", "create-snapshot",
+	)
 	createImageResult, _, err := s.c.Server.CreateImage(ctx, server, &hcloud.ServerCreateImageOpts{
 		Type:        hcloud.ImageTypeSnapshot,
 		Description: options.Description,
@@ -383,16 +479,20 @@ func (s *Client) Upload(ctx context.Context, options UploadOptions) (*hcloud.Ima
 	if err != nil {
 		return nil, fmt.Errorf("failed to create snapshot: %w", err)
 	}
-	logger.DebugContext(ctx, "image creation requested, waiting on action")
+	logger.DebugContext(ctx, "snapshot creation requested, waiting for action")
 
 	err = s.c.Action.WaitFor(ctx, createImageResult.Action)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create snapshot: %w", err)
 	}
-	logger.DebugContext(ctx, "action finished, image was created")
+	logger.DebugContext(ctx, "snapshot created")
 
 	image := createImageResult.Image
-	logger.InfoContext(ctx, "# Image was created", "image", image.ID)
+	logger.InfoContext(ctx, "image created successfully",
+		"log.type", "result",
+		"status", "success",
+		"image-id", image.ID,
+	)
 
 	// Resource cleanup is happening in `defer`
 	return image, nil
@@ -412,14 +512,20 @@ func (s *Client) CleanupTempResources(ctx context.Context) error {
 	selector := labelutil.Selector(DefaultLabels)
 	logger = logger.With("selector", selector)
 
-	logger.InfoContext(ctx, "# Cleaning up Servers")
+	logger.InfoContext(ctx, "Cleaning up servers",
+		"log.type", "cleanup",
+		"resource", "servers",
+	)
 	err := s.cleanupTempServers(ctx, logger, selector)
 	if err != nil {
 		return fmt.Errorf("failed to clean up all servers: %w", err)
 	}
 	logger.DebugContext(ctx, "cleaned up all servers")
 
-	logger.InfoContext(ctx, "# Cleaning up SSH Keys")
+	logger.InfoContext(ctx, "Cleaning up SSH keys",
+		"log.type", "cleanup",
+		"resource", "ssh-keys",
+	)
 	err = s.cleanupTempSSHKeys(ctx, logger, selector)
 	if err != nil {
 		return fmt.Errorf("failed to clean up all ssh keys: %w", err)
@@ -438,10 +544,10 @@ func (s *Client) cleanupTempServers(ctx context.Context, logger *slog.Logger, se
 	}
 
 	if len(servers) == 0 {
-		logger.InfoContext(ctx, "No servers found")
+		logger.InfoContext(ctx, "no servers found to clean up")
 		return nil
 	}
-	logger.InfoContext(ctx, "removing servers", "count", len(servers))
+	logger.InfoContext(ctx, "deleting servers", "count", len(servers))
 
 	errs := []error{}
 	actions := make([]*hcloud.Action, 0, len(servers))
@@ -472,7 +578,7 @@ func (s *Client) cleanupTempServers(ctx context.Context, logger *slog.Logger, se
 			}
 		}
 
-		logger.InfoContext(ctx, "successfully deleted servers", "servers", ids)
+		logger.InfoContext(ctx, "servers deleted successfully", "server-ids", ids, "status", "success")
 	}
 
 	if len(errorActions) > 0 {
@@ -498,7 +604,7 @@ func (s *Client) cleanupTempSSHKeys(ctx context.Context, logger *slog.Logger, se
 	}
 
 	if len(keys) == 0 {
-		logger.InfoContext(ctx, "No ssh keys found")
+		logger.InfoContext(ctx, "no ssh keys found to clean up")
 		return nil
 	}
 

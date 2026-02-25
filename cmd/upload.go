@@ -113,7 +113,15 @@ var uploadCmd = &cobra.Command{
 			return fmt.Errorf("failed to upload the image: %w", err)
 		}
 
-		logger.InfoContext(ctx, "Successfully uploaded the image!", "image", image.ID)
+		logger.InfoContext(ctx, "image uploaded successfully",
+			"log.type", "result",
+			"status", "success",
+		)
+
+		logger.InfoContext(ctx, fmt.Sprintf("Image ID: %d", image.ID),
+			"log.type", "result",
+			"status", "success",
+		)
 
 		return nil
 	},

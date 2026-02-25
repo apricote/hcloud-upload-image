@@ -38,7 +38,10 @@ and will remove in-use resources if called at the same time.`,
 			return fmt.Errorf("failed to clean up temporary resources: %w", err)
 		}
 
-		logger.InfoContext(ctx, "Successfully cleaned up all temporary resources!")
+		logger.InfoContext(ctx, "cleanup completed successfully",
+			"log.type", "result",
+			"status", "success",
+		)
 
 		return nil
 	},
