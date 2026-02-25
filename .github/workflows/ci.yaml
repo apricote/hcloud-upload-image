@@ -83,3 +83,17 @@ jobs:
 
       - if: failure()
         run: echo "::error::Check failed, please run 'go run ./scripts/cli-help-pages.go' and commit the changes."
+
+  nix-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Nix
+        uses: cachix/install-nix-action@v31
+
+      - run: nix build
+
+      - if: failure()
+        run: echo "::error::Check failed, please check if the vendorHash needs and update and commit the changes."
