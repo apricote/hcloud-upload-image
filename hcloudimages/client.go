@@ -91,7 +91,7 @@ type UploadOptions struct {
 	// Labels will be added to the resulting image (snapshot). Use these to filter the image list if you
 	// need to identify the image later on.
 	//
-	// We also always add a label `apricote.de/created-by=hcloud-image-upload` ([CreatedByLabel], [CreatedByValue]).
+	// We also always add a label `apricote.de/created-by=hcloud-upload-image` ([CreatedByLabel], [CreatedByValue]).
 	Labels map[string]string
 
 	// Location is the datacenter location for the temporary server.
