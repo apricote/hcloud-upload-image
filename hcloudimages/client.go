@@ -543,7 +543,10 @@ func assembleCommand(options UploadOptions) (string, error) {
 
 	switch options.ImageFormat {
 	case FormatRaw:
-		cmd += "dd of=/dev/sda bs=4M"
+		// With conv=sparse dd will skip any zero blocks and not write them to the disk, this makes it faster if you
+		// have a large raw image with multiple (nearly) empty but large partitions.
+		// For example Flatcar has ~12 GB, with ~90% being zero blocks.
+		cmd += "dd of=/dev/sda bs=4M conv=sparse"
 	case FormatQCOW2:
 		cmd += "tee image.qcow2 > /dev/null && qemu-img dd -f qcow2 -O raw if=image.qcow2 of=/dev/sda bs=4M"
 	default:

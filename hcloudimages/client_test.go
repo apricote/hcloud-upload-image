@@ -24,21 +24,21 @@ func TestAssembleCommand(t *testing.T) {
 		{
 			name:    "local raw",
 			options: UploadOptions{},
-			want:    "bash -c 'set -euo pipefail && dd of=/dev/sda bs=4M && sync'",
+			want:    "bash -c 'set -euo pipefail && dd of=/dev/sda bs=4M conv=sparse && sync'",
 		},
 		{
 			name: "remote raw",
 			options: UploadOptions{
 				ImageURL: mustParseURL("https://example.com/image.xz"),
 			},
-			want: "bash -c 'set -euo pipefail && wget --no-verbose -O - \"https://example.com/image.xz\" | dd of=/dev/sda bs=4M && sync'",
+			want: "bash -c 'set -euo pipefail && wget --no-verbose -O - \"https://example.com/image.xz\" | dd of=/dev/sda bs=4M conv=sparse && sync'",
 		},
 		{
 			name: "local xz",
 			options: UploadOptions{
 				ImageCompression: CompressionXZ,
 			},
-			want: "bash -c 'set -euo pipefail && xz -cd | dd of=/dev/sda bs=4M && sync'",
+			want: "bash -c 'set -euo pipefail && xz -cd | dd of=/dev/sda bs=4M conv=sparse && sync'",
 		},
 		{
 			name: "remote xz",
@@ -46,14 +46,14 @@ func TestAssembleCommand(t *testing.T) {
 				ImageURL:         mustParseURL("https://example.com/image.xz"),
 				ImageCompression: CompressionXZ,
 			},
-			want: "bash -c 'set -euo pipefail && wget --no-verbose -O - \"https://example.com/image.xz\" | xz -cd | dd of=/dev/sda bs=4M && sync'",
+			want: "bash -c 'set -euo pipefail && wget --no-verbose -O - \"https://example.com/image.xz\" | xz -cd | dd of=/dev/sda bs=4M conv=sparse && sync'",
 		},
 		{
 			name: "local zstd",
 			options: UploadOptions{
 				ImageCompression: CompressionZSTD,
 			},
-			want: "bash -c 'set -euo pipefail && zstd -cd | dd of=/dev/sda bs=4M && sync'",
+			want: "bash -c 'set -euo pipefail && zstd -cd | dd of=/dev/sda bs=4M conv=sparse && sync'",
 		},
 		{
 			name: "remote zstd",
@@ -61,14 +61,14 @@ func TestAssembleCommand(t *testing.T) {
 				ImageURL:         mustParseURL("https://example.com/image.zst"),
 				ImageCompression: CompressionZSTD,
 			},
-			want: "bash -c 'set -euo pipefail && wget --no-verbose -O - \"https://example.com/image.zst\" | zstd -cd | dd of=/dev/sda bs=4M && sync'",
+			want: "bash -c 'set -euo pipefail && wget --no-verbose -O - \"https://example.com/image.zst\" | zstd -cd | dd of=/dev/sda bs=4M conv=sparse && sync'",
 		},
 		{
 			name: "local bz2",
 			options: UploadOptions{
 				ImageCompression: CompressionBZ2,
 			},
-			want: "bash -c 'set -euo pipefail && bzip2 -cd | dd of=/dev/sda bs=4M && sync'",
+			want: "bash -c 'set -euo pipefail && bzip2 -cd | dd of=/dev/sda bs=4M conv=sparse && sync'",
 		},
 		{
 			name: "remote bz2",
@@ -76,7 +76,7 @@ func TestAssembleCommand(t *testing.T) {
 				ImageURL:         mustParseURL("https://example.com/image.bz2"),
 				ImageCompression: CompressionBZ2,
 			},
-			want: "bash -c 'set -euo pipefail && wget --no-verbose -O - \"https://example.com/image.bz2\" | bzip2 -cd | dd of=/dev/sda bs=4M && sync'",
+			want: "bash -c 'set -euo pipefail && wget --no-verbose -O - \"https://example.com/image.bz2\" | bzip2 -cd | dd of=/dev/sda bs=4M conv=sparse && sync'",
 		},
 		{
 			name: "local qcow2",
