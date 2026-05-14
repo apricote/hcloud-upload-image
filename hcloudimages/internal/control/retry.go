@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/hetznercloud/hcloud-go/v2/hcloud"
-	
+
 	"github.com/apricote/hcloud-upload-image/hcloudimages/contextlogger"
 )
 
@@ -21,7 +21,7 @@ func Retry(ctx context.Context, maxTries int, f func() error) error {
 
 	backoffFunc := hcloud.ExponentialBackoffWithOpts(hcloud.ExponentialBackoffOpts{Multiplier: 2, Base: 200 * time.Millisecond, Cap: 2 * time.Second})
 
-	for try := 0; try < maxTries; try++ {
+	for try := range maxTries {
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
