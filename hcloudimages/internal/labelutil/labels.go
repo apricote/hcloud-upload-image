@@ -1,16 +1,14 @@
 package labelutil
 
+import "maps"
+
 import "fmt"
 
 func Merge(a, b map[string]string) map[string]string {
 	result := make(map[string]string, len(a)+len(b))
 
-	for k, v := range a {
-		result[k] = v
-	}
-	for k, v := range b {
-		result[k] = v
-	}
+	maps.Copy(result, a)
+	maps.Copy(result, b)
 
 	return result
 }
