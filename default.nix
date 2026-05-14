@@ -9,10 +9,10 @@ buildGoModule rec {
       (builtins.readFile ./internal/version/version.go));
 
   src = ./.;
-  vendorHash = "sha256-NRTqtmmH5tU6tyXC5VkHHL2yPSgJ9a1grastzWRdKH0=";
+  vendorHash = "sha256-CVdhf8pDBANzlZzaqaGPv+vUTOQB/K+LEIh8tZUTSnA=";
   env.GOWORK = "off";
   subPackages = ["."];
-  goSum = builtins.readFile ./go.sum; # make sure to rebuild
+  goSum = ./go.sum; # make sure to rebuild
 
   postPatch = ''
     echo 'replace github.com/apricote/hcloud-upload-image/hcloudimages => ./hcloudimages' >> go.mod
