@@ -5,7 +5,7 @@ go 1.25.0
 toolchain go1.26.3
 
 require (
-	github.com/apricote/hcloud-upload-image/hcloudimages v1.3.0
+	github.com/apricote/hcloud-upload-image/hcloudimages v1.4.0
 	github.com/hetznercloud/hcloud-go/v2 v2.40.0
 	github.com/spf13/cobra v1.10.2
 )
