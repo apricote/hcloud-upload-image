@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.4.0](https://github.com/apricote/hcloud-upload-image/compare/hcloudimages/v1.3.0...hcloudimages/v1.4.0) (2026-05-14)
+
+
+### Features
+
+* faster writing to disk by skipping zero blocks ([#165](https://github.com/apricote/hcloud-upload-image/issues/165)) ([fc871af](https://github.com/apricote/hcloud-upload-image/commit/fc871afa8d9a5f468572cda0911537ecbf79fd58))
+* require Go 1.25 ([#172](https://github.com/apricote/hcloud-upload-image/issues/172)) ([6a457b1](https://github.com/apricote/hcloud-upload-image/commit/6a457b11d3ea400e9ac8b6e25bbbb46168fe0ab5))
+
 ## [1.3.0](https://github.com/apricote/hcloud-upload-image/compare/hcloudimages/v1.2.0...hcloudimages/v1.3.0) (2025-12-22)
 
 
