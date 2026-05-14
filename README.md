@@ -65,9 +65,14 @@ To run directly without installing (assumes flakes are enabled):
 ```shell
 # Run the application directly
 nix run github:apricote/hcloud-upload-image
+```
 
-# Start a shell with `hcloud-upload-image` in $PATH
-nix shell github:apricote/hcloud-upload-image
+To install on your system from nixpkgs (assumes nixos-unstable):
+
+```nix
+{pkgs, ...}: {
+  environment.systemPackages = [ pkgs.hcloud-upload-image ];
+}
 ```
 
 To install on your system (assumes flakes are enabled):
@@ -93,26 +98,6 @@ To install on your system (assumes flakes are enabled):
     };
   };
 }
-```
-
-To install on your system (using a non-flake version manager):
-
-```shell
-# Using npins
-npins add github apricote hcloud-upload-image
-
-# Using niv
-niv add apricote/hcloud-upload-image
-```
-
-Then in your Nix expressions:
-
-```nix
-let
-  sources = import ./npins;             # For npins
-  # sources = import ./nix/sources.nix; # For niv
-in
-(pkgs.callPackage sources.hcloud-upload-image {})
 ```
 
 #### Docker
