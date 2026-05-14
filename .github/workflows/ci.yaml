@@ -55,14 +55,33 @@ jobs:
         with:
           go-version-file: go.mod
 
-      - name: Run go mod tidy
-        run: go mod tidy
+      - name: Run go mod tidy (CLI)
+        run: go mod tidy -diff
 
-      - name: Check uncommitted changes
-        run: git diff --exit-code
+      - name: Run go mod tidy (Lib)
+        run: go mod tidy -diff
+        working-directory: hcloudimages
 
       - if: failure()
         run: echo "::error::Check failed, please run 'go mod tidy' and commit the changes."
+
+  go-fix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+
+      - name: Run go fix
+        run: go fix -diff ./... ./hcloudimages/...
+
+      - if: failure()
+        run: echo "::error::Check failed, please run 'go fix ./... ./hcloudimages/...' and commit the changes."
+
 
   cli-help-pages:
     runs-on: ubuntu-latest
