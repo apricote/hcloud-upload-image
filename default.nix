@@ -9,7 +9,7 @@ buildGoModule rec {
       (builtins.readFile ./internal/version/version.go));
 
   src = ./.;
-  vendorHash = "sha256-CVdhf8pDBANzlZzaqaGPv+vUTOQB/K+LEIh8tZUTSnA=";
+  vendorHash = "sha256-YgiSTnCg+7RuSxp0NDNn7QamV7HgdQY+DrbEIv68eJw=";
   env.GOWORK = "off";
   subPackages = ["."];
   goSum = ./go.sum; # make sure to rebuild

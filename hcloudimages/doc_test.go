@@ -21,10 +21,12 @@ func ExampleClient_Upload() {
 	}
 
 	image, err := client.Upload(context.TODO(), hcloudimages.UploadOptions{
-		ImageURL:         imageURL,
-		ImageCompression: hcloudimages.CompressionBZ2,
-		Architecture:     hcloud.ArchitectureX86,
-		Location:         &hcloud.Location{Name: "nbg1"}, // Optional: defaults to fsn1
+		WriteOptions: hcloudimages.WriteOptions{
+			ImageURL:         imageURL,
+			ImageCompression: hcloudimages.CompressionBZ2,
+		},
+		Architecture: hcloud.ArchitectureX86,
+		Location:     &hcloud.Location{Name: "nbg1"}, // Optional: defaults to fsn1
 	})
 	if err != nil {
 		panic(err)

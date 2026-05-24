@@ -17,32 +17,32 @@ func mustParseURL(s string) *url.URL {
 func TestAssembleCommand(t *testing.T) {
 	tests := []struct {
 		name    string
-		options UploadOptions
+		options WriteOptions
 		want    string
 		wantErr bool
 	}{
 		{
 			name:    "local raw",
-			options: UploadOptions{},
+			options: WriteOptions{},
 			want:    "bash -c 'set -euo pipefail && dd of=/dev/sda bs=4M conv=sparse && sync'",
 		},
 		{
 			name: "remote raw",
-			options: UploadOptions{
+			options: WriteOptions{
 				ImageURL: mustParseURL("https://example.com/image.xz"),
 			},
 			want: "bash -c 'set -euo pipefail && wget --no-verbose -O - \"https://example.com/image.xz\" | dd of=/dev/sda bs=4M conv=sparse && sync'",
 		},
 		{
 			name: "local xz",
-			options: UploadOptions{
+			options: WriteOptions{
 				ImageCompression: CompressionXZ,
 			},
 			want: "bash -c 'set -euo pipefail && xz -cd | dd of=/dev/sda bs=4M conv=sparse && sync'",
 		},
 		{
 			name: "remote xz",
-			options: UploadOptions{
+			options: WriteOptions{
 				ImageURL:         mustParseURL("https://example.com/image.xz"),
 				ImageCompression: CompressionXZ,
 			},
@@ -50,14 +50,14 @@ func TestAssembleCommand(t *testing.T) {
 		},
 		{
 			name: "local zstd",
-			options: UploadOptions{
+			options: WriteOptions{
 				ImageCompression: CompressionZSTD,
 			},
 			want: "bash -c 'set -euo pipefail && zstd -cd | dd of=/dev/sda bs=4M conv=sparse && sync'",
 		},
 		{
 			name: "remote zstd",
-			options: UploadOptions{
+			options: WriteOptions{
 				ImageURL:         mustParseURL("https://example.com/image.zst"),
 				ImageCompression: CompressionZSTD,
 			},
@@ -65,14 +65,14 @@ func TestAssembleCommand(t *testing.T) {
 		},
 		{
 			name: "local bz2",
-			options: UploadOptions{
+			options: WriteOptions{
 				ImageCompression: CompressionBZ2,
 			},
 			want: "bash -c 'set -euo pipefail && bzip2 -cd | dd of=/dev/sda bs=4M conv=sparse && sync'",
 		},
 		{
 			name: "remote bz2",
-			options: UploadOptions{
+			options: WriteOptions{
 				ImageURL:         mustParseURL("https://example.com/image.bz2"),
 				ImageCompression: CompressionBZ2,
 			},
@@ -80,14 +80,14 @@ func TestAssembleCommand(t *testing.T) {
 		},
 		{
 			name: "local qcow2",
-			options: UploadOptions{
+			options: WriteOptions{
 				ImageFormat: FormatQCOW2,
 			},
 			want: "bash -c 'set -euo pipefail && tee image.qcow2 > /dev/null && qemu-img dd -f qcow2 -O raw if=image.qcow2 of=/dev/sda bs=4M && sync'",
 		},
 		{
 			name: "remote qcow2",
-			options: UploadOptions{
+			options: WriteOptions{
 				ImageURL:    mustParseURL("https://example.com/image.qcow2"),
 				ImageFormat: FormatQCOW2,
 			},
@@ -96,7 +96,7 @@ func TestAssembleCommand(t *testing.T) {
 
 		{
 			name: "unknown compression",
-			options: UploadOptions{
+			options: WriteOptions{
 				ImageCompression: "noodle",
 			},
 			wantErr: true,
@@ -104,7 +104,7 @@ func TestAssembleCommand(t *testing.T) {
 
 		{
 			name: "unknown format",
-			options: UploadOptions{
+			options: WriteOptions{
 				ImageFormat: "poodle",
 			},
 			wantErr: true,
