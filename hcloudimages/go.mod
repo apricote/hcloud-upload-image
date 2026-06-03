@@ -2,7 +2,7 @@ module github.com/apricote/hcloud-upload-image/hcloudimages
 
 go 1.25.0
 
-toolchain go1.26.3
+toolchain go1.26.4
 
 require (
 	github.com/hetznercloud/hcloud-go/v2 v2.40.0
