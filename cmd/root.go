@@ -8,8 +8,8 @@ import (
 	"github.com/hetznercloud/hcloud-go/v2/hcloud"
 	"github.com/spf13/cobra"
 
-	"github.com/apricote/hcloud-upload-image/hcloudimages"
-	"github.com/apricote/hcloud-upload-image/hcloudimages/contextlogger"
+	"github.com/apricote/hcloud-upload-image/hcloudimages/v2"
+	"github.com/apricote/hcloud-upload-image/hcloudimages/v2/contextlogger"
 	"github.com/apricote/hcloud-upload-image/internal/ui"
 	"github.com/apricote/hcloud-upload-image/internal/version"
 )
