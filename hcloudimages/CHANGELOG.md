@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.0.0](https://github.com/apricote/hcloud-upload-image/compare/hcloudimages/v1.4.0...hcloudimages/v2.0.0) (2026-06-17)
+
+
+### ⚠ BREAKING CHANGES
+
+* new write-to-disk command ([#178](https://github.com/apricote/hcloud-upload-image/issues/178))
+
+### Features
+
+* new write-to-disk command ([#178](https://github.com/apricote/hcloud-upload-image/issues/178)) ([d65441f](https://github.com/apricote/hcloud-upload-image/commit/d65441fc41e377e4a51c4b817383eb7167264c97)), closes [#157](https://github.com/apricote/hcloud-upload-image/issues/157)
+
 ## [1.4.0](https://github.com/apricote/hcloud-upload-image/compare/hcloudimages/v1.3.0...hcloudimages/v1.4.0) (2026-05-14)
 
 
