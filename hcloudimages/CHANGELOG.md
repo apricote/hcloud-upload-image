@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.1](https://github.com/apricote/hcloud-upload-image/compare/hcloudimages/v2.0.0...hcloudimages/v2.0.1) (2026-06-17)
+
+
+### Bug Fixes
+
+* update hcloudimages module path for v2 ([#184](https://github.com/apricote/hcloud-upload-image/issues/184)) ([f4fd485](https://github.com/apricote/hcloud-upload-image/commit/f4fd4854492fd53221293cd828db16305c5accf5))
+
 ## [2.0.0](https://github.com/apricote/hcloud-upload-image/compare/hcloudimages/v1.4.0...hcloudimages/v2.0.0) (2026-06-17)
 
 
