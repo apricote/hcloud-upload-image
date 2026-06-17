@@ -17,4 +17,5 @@ Manage custom OS images on Hetzner Cloud.
 
 * [hcloud-upload-image cleanup](hcloud-upload-image_cleanup.md)	 - Remove any temporary resources that were left over
 * [hcloud-upload-image upload](hcloud-upload-image_upload.md)	 - Upload the specified disk image into your Hetzner Cloud project.
+* [hcloud-upload-image write-to-disk](hcloud-upload-image_write-to-disk.md)	 - Write the specified disk image to the root disk of the specified server.
 

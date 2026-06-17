@@ -49,7 +49,7 @@ var (
 	rescueSystemRootDiskSizeMB int64 = 960
 )
 
-type UploadOptions struct {
+type WriteOptions struct {
 	// ImageURL must be publicly available. The instance will download the image from this endpoint.
 	ImageURL *url.URL
 
@@ -65,9 +65,12 @@ type UploadOptions struct {
 	// Can be optionally set to make the client validate that the image can be written to the server.
 	ImageSize int64
 
-	// Possible future additions:
-	// ImageSignatureVerification
-	// ImageLocalPath
+	// Server the image is written to.
+	Server *hcloud.Server
+}
+
+type UploadOptions struct {
+	WriteOptions
 
 	// Architecture should match the architecture of the Image. This decides if the Snapshot can later be
 	// used with [hcloud.ArchitectureX86] or [hcloud.ArchitectureARM] servers.
@@ -122,7 +125,7 @@ const (
 	// FormatQCOW2 allows to upload images in the qcow2 format directly.
 	//
 	// The qcow2 image must fit on the disk available in the rescue system. "qemu-img dd", which is used to convert
-	// qcow2 to raw, requires a file as an input. If [UploadOption.ImageSize] is set and FormatQCOW2 is used, there is a
+	// qcow2 to raw, requires a file as an input. If [WriteOptions.ImageSize] is set and FormatQCOW2 is used, there is a
 	// warning message displayed if there is a high probability of issues.
 	FormatQCOW2 Format = "qcow2"
 )
@@ -138,27 +141,89 @@ type Client struct {
 	c *hcloud.Client
 }
 
-// Upload the specified image into a snapshot on Hetzner Cloud.
+// WriteToDisk writes the specified image onto the root disk of an existing server on Hetzner Cloud.
 //
-// As the Hetzner Cloud API has no direct way to upload images, we create a temporary server,
-// overwrite the root disk and take a snapshot of that disk instead.
-//
-// The temporary server costs money. If the upload fails, we might be unable to delete the server. Check out
-// CleanupTempResources for a helper in this case.
-func (s *Client) Upload(ctx context.Context, options UploadOptions) (*hcloud.Image, error) {
-	logger := contextlogger.From(ctx).With(
-		"library", "hcloudimages",
-		"method", "upload",
-	)
-
+// The server will be rebooted multiple times and any existing data is lost.
+func (s *Client) WriteToDisk(ctx context.Context, options WriteOptions) error {
 	id, err := randomid.Generate()
 	if err != nil {
-		return nil, err
+		return err
 	}
-	logger = logger.With("run-id", id)
-	// For simplicity, we use the name random name for SSH Key + Server
+
+	logger := contextlogger.From(ctx).With(
+		"library", "hcloudimages",
+		"method", "write",
+		"run-id", id,
+	)
+	ctx = contextlogger.New(ctx, logger)
+
 	resourceName := resourcePrefix + id
-	labels := labelutil.Merge(DefaultLabels, options.Labels)
+
+	// 1. Create SSH Key
+	key, privateKey, keyCleanup, err := s.generateSSHKey(ctx, 1, resourceName, DefaultLabels)
+	if err != nil {
+		return err
+	}
+	defer keyCleanup(false)
+
+	// 2. Power off Server
+	logger.InfoContext(ctx, "# Step 2: Shutting down server")
+	powerOffAction, _, err := s.c.Server.Poweroff(ctx, options.Server)
+	if err != nil {
+		return fmt.Errorf("stopping the server failed: %w", err)
+	}
+
+	logger.DebugContext(ctx, "power off requested, waiting on action")
+
+	err = s.c.Action.WaitFor(ctx, powerOffAction)
+	if err != nil {
+		return fmt.Errorf("stopping the server failed: %w", err)
+	}
+	logger.DebugContext(ctx, "action finished, server is powered off")
+
+	// 3-8
+	return s.write(ctx, options, 3, key, privateKey)
+}
+
+func (s *Client) generateSSHKey(ctx context.Context, step int, resourceName string, labels map[string]string) (*hcloud.SSHKey, []byte, func(bool), error) {
+	logger := contextlogger.From(ctx)
+
+	// 1. Create SSH Key
+	logger.InfoContext(ctx, fmt.Sprintf("# Step %d: Generating SSH Key", step))
+	privateKey, publicKey, err := sshutil.GenerateKeyPair()
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to generate temporary ssh key pair: %w", err)
+	}
+
+	key, _, err := s.c.SSHKey.Create(ctx, hcloud.SSHKeyCreateOpts{
+		Name:      resourceName,
+		PublicKey: string(publicKey),
+		Labels:    labels,
+	})
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to submit temporary ssh key to API: %w", err)
+	}
+	logger.DebugContext(ctx, "Uploaded ssh key", "ssh-key-id", key.ID)
+	return key, privateKey, func(skipCleanup bool) {
+		// Cleanup SSH Key
+		if skipCleanup {
+			logger.InfoContext(ctx, "Cleanup: Skipping cleanup of temporary ssh key")
+			return
+		}
+
+		logger.InfoContext(ctx, "Cleanup: Deleting temporary ssh key")
+
+		_, err := s.c.SSHKey.Delete(ctx, key)
+		if err != nil {
+			logger.WarnContext(ctx, "Cleanup: ssh key could not be deleted", "error", err)
+			// TODO
+		}
+	}, nil
+}
+
+// write is the internal utility function to actually write the image to a root disk. It expects a powered off server and returns a powered off server.
+func (s *Client) write(ctx context.Context, options WriteOptions, initialStep int, key *hcloud.SSHKey, privateKey []byte) error {
+	logger := contextlogger.From(ctx)
 
 	// 0. Validations
 	if options.ImageFormat == FormatQCOW2 && options.ImageSize > 0 {
@@ -173,37 +238,140 @@ func (s *Client) Upload(ctx context.Context, options UploadOptions) (*hcloud.Ima
 		}
 	}
 
-	// 1. Create SSH Key
-	logger.InfoContext(ctx, "# Step 1: Generating SSH Key")
-	privateKey, publicKey, err := sshutil.GenerateKeyPair()
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate temporary ssh key pair: %w", err)
-	}
-
-	key, _, err := s.c.SSHKey.Create(ctx, hcloud.SSHKeyCreateOpts{
-		Name:      resourceName,
-		PublicKey: string(publicKey),
-		Labels:    labels,
+	// 3. Activate Rescue System
+	logger.InfoContext(ctx, fmt.Sprintf("# Step %d: Activating Rescue System", initialStep+0))
+	enableRescueResult, _, err := s.c.Server.EnableRescue(ctx, options.Server, hcloud.ServerEnableRescueOpts{
+		Type:    defaultRescueType,
+		SSHKeys: []*hcloud.SSHKey{key},
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to submit temporary ssh key to API: %w", err)
+		return fmt.Errorf("enabling the rescue system on the temporary server failed: %w", err)
 	}
-	logger.DebugContext(ctx, "Uploaded ssh key", "ssh-key-id", key.ID)
-	defer func() {
-		// Cleanup SSH Key
-		if options.DebugSkipResourceCleanup {
-			logger.InfoContext(ctx, "Cleanup: Skipping cleanup of temporary ssh key")
-			return
-		}
 
-		logger.InfoContext(ctx, "Cleanup: Deleting temporary ssh key")
+	logger.DebugContext(ctx, "rescue system requested, waiting on action")
 
-		_, err := s.c.SSHKey.Delete(ctx, key)
-		if err != nil {
-			logger.WarnContext(ctx, "Cleanup: ssh key could not be deleted", "error", err)
-			// TODO
-		}
-	}()
+	err = s.c.Action.WaitFor(ctx, enableRescueResult.Action)
+	if err != nil {
+		return fmt.Errorf("enabling the rescue system on the temporary server failed: %w", err)
+	}
+	logger.DebugContext(ctx, "action finished, rescue system enabled")
+
+	// 4. Boot Server
+	logger.InfoContext(ctx, fmt.Sprintf("# Step %d: Booting Server", initialStep+1))
+	powerOnAction, _, err := s.c.Server.Poweron(ctx, options.Server)
+	if err != nil {
+		return fmt.Errorf("starting the temporary server failed: %w", err)
+	}
+
+	logger.DebugContext(ctx, "boot requested, waiting on action")
+
+	err = s.c.Action.WaitFor(ctx, powerOnAction)
+	if err != nil {
+		return fmt.Errorf("starting the temporary server failed: %w", err)
+	}
+	logger.DebugContext(ctx, "action finished, server is booting")
+
+	// 5. Open SSH Session
+	logger.InfoContext(ctx, fmt.Sprintf("# Step %d: Opening SSH Connection", initialStep+2))
+	signer, err := ssh.ParsePrivateKey(privateKey)
+	if err != nil {
+		return fmt.Errorf("parsing the automatically generated temporary private key failed: %w", err)
+	}
+
+	sshClientConfig := &ssh.ClientConfig{
+		User: "root",
+		Auth: []ssh.AuthMethod{
+			ssh.PublicKeys(signer),
+		},
+		// There is no way to get the host key of the rescue system beforehand
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+		Timeout:         defaultSSHDialTimeout,
+	}
+
+	// the server needs some time until its properly started and ssh is available
+	var sshClient *ssh.Client
+
+	err = control.Retry(
+		contextlogger.New(ctx, logger.With("operation", "ssh")),
+		100, // ~ 3 minutes
+		func() error {
+			var err error
+			logger.DebugContext(ctx, "trying to connect to server", "ip", options.Server.PublicNet.IPv4.IP)
+			sshClient, err = ssh.Dial("tcp", options.Server.PublicNet.IPv4.IP.String()+":ssh", sshClientConfig)
+			return err
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("failed to ssh into temporary server: %w", err)
+	}
+	defer func() { _ = sshClient.Close() }()
+
+	// 6. Wipe existing disk, to avoid storing any bytes from it in the snapshot
+	logger.InfoContext(ctx, fmt.Sprintf("# Step %d: Cleaning existing disk", initialStep+3))
+
+	output, err := sshsession.Run(sshClient, "blkdiscard --force /dev/sda", nil)
+	logger.DebugContext(ctx, string(output))
+	if err != nil {
+		return fmt.Errorf("failed to clean existing disk: %w", err)
+	}
+
+	// 7. SSH On Server: Download Image, Decompress, Write to Root Disk
+	logger.InfoContext(ctx, fmt.Sprintf("# Step %d: Downloading image and writing to disk", initialStep+4))
+
+	cmd, err := assembleCommand(options)
+	if err != nil {
+		return err
+	}
+
+	logger.DebugContext(ctx, "running download, decompress and write to disk command", "cmd", cmd)
+
+	output, err = sshsession.Run(sshClient, cmd, options.ImageReader)
+	logger.InfoContext(ctx, fmt.Sprintf("# Step %d: Finished writing image to disk", initialStep+4))
+	logger.DebugContext(ctx, string(output))
+	if err != nil {
+		return fmt.Errorf("failed to download and write the image: %w", err)
+	}
+
+	// 8. SSH On Server: Shutdown
+	logger.InfoContext(ctx, fmt.Sprintf("# Step %d: Shutting down server", initialStep+5))
+	_, err = sshsession.Run(sshClient, "shutdown now", nil)
+	if err != nil {
+		// TODO Verify if shutdown error, otherwise return
+		logger.WarnContext(ctx, "shutdown returned error", "err", err)
+	}
+
+	return nil
+}
+
+// Upload the specified image into a snapshot on Hetzner Cloud.
+//
+// As the Hetzner Cloud API has no direct way to upload images, we create a temporary server,
+// overwrite the root disk and take a snapshot of that disk instead.
+//
+// The temporary server costs money. If the upload fails, we might be unable to delete the server. Check out
+// CleanupTempResources for a helper in this case.
+func (s *Client) Upload(ctx context.Context, options UploadOptions) (*hcloud.Image, error) {
+	id, err := randomid.Generate()
+	if err != nil {
+		return nil, err
+	}
+
+	logger := contextlogger.From(ctx).With(
+		"library", "hcloudimages",
+		"method", "upload",
+		"run-id", id,
+	)
+	ctx = contextlogger.New(ctx, logger)
+
+	// For simplicity, we use the same random name for SSH Key + Server
+	resourceName := resourcePrefix + id
+	labels := labelutil.Merge(DefaultLabels, options.Labels)
+
+	key, privateKey, keyCleanup, err := s.generateSSHKey(ctx, 1, resourceName, labels)
+	if err != nil {
+		return nil, err
+	}
+	defer keyCleanup(options.DebugSkipResourceCleanup)
 
 	// 2. Create Server
 	logger.InfoContext(ctx, "# Step 2: Creating Server")
@@ -255,7 +423,7 @@ func (s *Client) Upload(ctx context.Context, options UploadOptions) (*hcloud.Ima
 	}
 	logger.DebugContext(ctx, "actions finished")
 
-	server := serverCreateResult.Server
+	options.Server = serverCreateResult.Server
 	defer func() {
 		// Cleanup Server
 		if options.DebugSkipResourceCleanup {
@@ -265,117 +433,21 @@ func (s *Client) Upload(ctx context.Context, options UploadOptions) (*hcloud.Ima
 
 		logger.InfoContext(ctx, "Cleanup: Deleting temporary server")
 
-		_, _, err := s.c.Server.DeleteWithResult(ctx, server)
+		_, _, err := s.c.Server.DeleteWithResult(ctx, options.Server)
 		if err != nil {
 			logger.WarnContext(ctx, "Cleanup: server could not be deleted", "error", err)
 		}
 	}()
 
-	// 3. Activate Rescue System
-	logger.InfoContext(ctx, "# Step 3: Activating Rescue System")
-	enableRescueResult, _, err := s.c.Server.EnableRescue(ctx, server, hcloud.ServerEnableRescueOpts{
-		Type:    defaultRescueType,
-		SSHKeys: []*hcloud.SSHKey{key},
-	})
-	if err != nil {
-		return nil, fmt.Errorf("enabling the rescue system on the temporary server failed: %w", err)
-	}
-
-	logger.DebugContext(ctx, "rescue system requested, waiting on action")
-
-	err = s.c.Action.WaitFor(ctx, enableRescueResult.Action)
-	if err != nil {
-		return nil, fmt.Errorf("enabling the rescue system on the temporary server failed: %w", err)
-	}
-	logger.DebugContext(ctx, "action finished, rescue system enabled")
-
-	// 4. Boot Server
-	logger.InfoContext(ctx, "# Step 4: Booting Server")
-	powerOnAction, _, err := s.c.Server.Poweron(ctx, server)
-	if err != nil {
-		return nil, fmt.Errorf("starting the temporary server failed: %w", err)
-	}
-
-	logger.DebugContext(ctx, "boot requested, waiting on action")
-
-	err = s.c.Action.WaitFor(ctx, powerOnAction)
-	if err != nil {
-		return nil, fmt.Errorf("starting the temporary server failed: %w", err)
-	}
-	logger.DebugContext(ctx, "action finished, server is booting")
-
-	// 5. Open SSH Session
-	logger.InfoContext(ctx, "# Step 5: Opening SSH Connection")
-	signer, err := ssh.ParsePrivateKey(privateKey)
-	if err != nil {
-		return nil, fmt.Errorf("parsing the automatically generated temporary private key failed: %w", err)
-	}
-
-	sshClientConfig := &ssh.ClientConfig{
-		User: "root",
-		Auth: []ssh.AuthMethod{
-			ssh.PublicKeys(signer),
-		},
-		// There is no way to get the host key of the rescue system beforehand
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-		Timeout:         defaultSSHDialTimeout,
-	}
-
-	// the server needs some time until its properly started and ssh is available
-	var sshClient *ssh.Client
-
-	err = control.Retry(
-		contextlogger.New(ctx, logger.With("operation", "ssh")),
-		100, // ~ 3 minutes
-		func() error {
-			var err error
-			logger.DebugContext(ctx, "trying to connect to server", "ip", server.PublicNet.IPv4.IP)
-			sshClient, err = ssh.Dial("tcp", server.PublicNet.IPv4.IP.String()+":ssh", sshClientConfig)
-			return err
-		},
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to ssh into temporary server: %w", err)
-	}
-	defer func() { _ = sshClient.Close() }()
-
-	// 6. Wipe existing disk, to avoid storing any bytes from it in the snapshot
-	logger.InfoContext(ctx, "# Step 6: Cleaning existing disk")
-
-	output, err := sshsession.Run(sshClient, "blkdiscard /dev/sda", nil)
-	logger.DebugContext(ctx, string(output))
-	if err != nil {
-		return nil, fmt.Errorf("failed to clean existing disk: %w", err)
-	}
-
-	// 7. SSH On Server: Download Image, Decompress, Write to Root Disk
-	logger.InfoContext(ctx, "# Step 7: Downloading image and writing to disk")
-
-	cmd, err := assembleCommand(options)
+	// Steps 3-8
+	err = s.write(ctx, options.WriteOptions, 3, key, privateKey)
 	if err != nil {
 		return nil, err
 	}
 
-	logger.DebugContext(ctx, "running download, decompress and write to disk command", "cmd", cmd)
-
-	output, err = sshsession.Run(sshClient, cmd, options.ImageReader)
-	logger.InfoContext(ctx, "# Step 7: Finished writing image to disk")
-	logger.DebugContext(ctx, string(output))
-	if err != nil {
-		return nil, fmt.Errorf("failed to download and write the image: %w", err)
-	}
-
-	// 8. SSH On Server: Shutdown
-	logger.InfoContext(ctx, "# Step 8: Shutting down server")
-	_, err = sshsession.Run(sshClient, "shutdown now", nil)
-	if err != nil {
-		// TODO Verify if shutdown error, otherwise return
-		logger.WarnContext(ctx, "shutdown returned error", "err", err)
-	}
-
 	// 9. Create Image from Server
 	logger.InfoContext(ctx, "# Step 9: Creating Image")
-	createImageResult, _, err := s.c.Server.CreateImage(ctx, server, &hcloud.ServerCreateImageOpts{
+	createImageResult, _, err := s.c.Server.CreateImage(ctx, options.Server, &hcloud.ServerCreateImageOpts{
 		Type:        hcloud.ImageTypeSnapshot,
 		Description: options.Description,
 		Labels:      labels,
@@ -520,7 +592,7 @@ func (s *Client) cleanupTempSSHKeys(ctx context.Context, logger *slog.Logger, se
 	return nil
 }
 
-func assembleCommand(options UploadOptions) (string, error) {
+func assembleCommand(options WriteOptions) (string, error) {
 	// Make sure that we fail early, ie. if the image url does not work
 	cmd := "set -euo pipefail && "
 

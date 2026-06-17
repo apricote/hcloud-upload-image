@@ -26,6 +26,7 @@ var (
 
 // The pre-authenticated client. Set in the root command PersistentPreRun
 var client *hcloudimages.Client
+var hcloudclient *hcloud.Client
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
@@ -95,7 +96,8 @@ func initClient(cmd *cobra.Command, _ []string) {
 		opts = append(opts, hcloud.WithDebugWriter(os.Stderr))
 	}
 
-	client = hcloudimages.NewClient(hcloud.NewClient(opts...))
+	hcloudclient = hcloud.NewClient(opts...)
+	client = hcloudimages.NewClient(hcloudclient)
 }
 
 func Execute() {
