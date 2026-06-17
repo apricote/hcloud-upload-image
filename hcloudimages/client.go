@@ -13,12 +13,12 @@ import (
 	"github.com/hetznercloud/hcloud-go/v2/hcloud/exp/kit/sshutil"
 	"golang.org/x/crypto/ssh"
 
-	"github.com/apricote/hcloud-upload-image/hcloudimages/contextlogger"
-	"github.com/apricote/hcloud-upload-image/hcloudimages/internal/actionutil"
-	"github.com/apricote/hcloud-upload-image/hcloudimages/internal/control"
-	"github.com/apricote/hcloud-upload-image/hcloudimages/internal/labelutil"
-	"github.com/apricote/hcloud-upload-image/hcloudimages/internal/randomid"
-	"github.com/apricote/hcloud-upload-image/hcloudimages/internal/sshsession"
+	"github.com/apricote/hcloud-upload-image/hcloudimages/v2/contextlogger"
+	"github.com/apricote/hcloud-upload-image/hcloudimages/v2/internal/actionutil"
+	"github.com/apricote/hcloud-upload-image/hcloudimages/v2/internal/control"
+	"github.com/apricote/hcloud-upload-image/hcloudimages/v2/internal/labelutil"
+	"github.com/apricote/hcloud-upload-image/hcloudimages/v2/internal/randomid"
+	"github.com/apricote/hcloud-upload-image/hcloudimages/v2/internal/sshsession"
 )
 
 const (
