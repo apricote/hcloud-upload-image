@@ -36,7 +36,7 @@
 //
 // By default, nothing is logged. As the update process takes a bit of time you might want to gain some insight into
 // the process. For this we provide optional logs through [log/slog]. You can set a [log/slog.Logger] in the
-// [context.Context] through [github.com/apricote/hcloud-upload-image/hcloudimages/contextlogger.New].
+// [context.Context] through [github.com/apricote/hcloud-upload-image/hcloudimages/v2/contextlogger.New].
 //
 // [Hetzner Cloud website]: https://www.hetzner.com/cloud/
 package hcloudimages

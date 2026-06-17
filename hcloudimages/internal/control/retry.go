@@ -10,7 +10,7 @@ import (
 
 	"github.com/hetznercloud/hcloud-go/v2/hcloud"
 
-	"github.com/apricote/hcloud-upload-image/hcloudimages/contextlogger"
+	"github.com/apricote/hcloud-upload-image/hcloudimages/v2/contextlogger"
 )
 
 // Retry executes f at most maxTries times.

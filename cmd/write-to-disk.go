@@ -12,8 +12,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
-	"github.com/apricote/hcloud-upload-image/hcloudimages"
-	"github.com/apricote/hcloud-upload-image/hcloudimages/contextlogger"
+	"github.com/apricote/hcloud-upload-image/hcloudimages/v2"
+	"github.com/apricote/hcloud-upload-image/hcloudimages/v2/contextlogger"
 )
 
 const (

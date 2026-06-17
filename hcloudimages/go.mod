@@ -1,4 +1,4 @@
-module github.com/apricote/hcloud-upload-image/hcloudimages
+module github.com/apricote/hcloud-upload-image/hcloudimages/v2
 
 go 1.25.0
 
