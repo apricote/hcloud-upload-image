@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0](https://github.com/apricote/hcloud-upload-image/compare/hcloudimages/v2.0.1...hcloudimages/v2.1.0) (2026-11-09)
+
+
+### Features
+
+* use rescue root password as alternative login ([#201](https://github.com/apricote/hcloud-upload-image/issues/201)) ([29c9af2](https://github.com/apricote/hcloud-upload-image/commit/29c9af2629856b399e60bb31c9497ba065b4b795))
+
 ## [2.0.1](https://github.com/apricote/hcloud-upload-image/compare/hcloudimages/v2.0.0...hcloudimages/v2.0.1) (2026-06-17)
 
 
