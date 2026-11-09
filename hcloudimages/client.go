@@ -282,6 +282,7 @@ func (s *Client) write(ctx context.Context, options WriteOptions, initialStep in
 		User: "root",
 		Auth: []ssh.AuthMethod{
 			ssh.PublicKeys(signer),
+			ssh.Password(enableRescueResult.RootPassword),
 		},
 		// There is no way to get the host key of the rescue system beforehand
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
