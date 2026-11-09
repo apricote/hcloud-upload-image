@@ -96,6 +96,10 @@ func initClient(cmd *cobra.Command, _ []string) {
 		opts = append(opts, hcloud.WithDebugWriter(os.Stderr))
 	}
 
+	if os.Getenv("HCLOUD_ENDPOINT") != "" {
+		opts = append(opts, hcloud.WithEndpoint(os.Getenv("HCLOUD_ENDPOINT")))
+	}
+
 	hcloudclient = hcloud.NewClient(opts...)
 	client = hcloudimages.NewClient(hcloudclient)
 }
