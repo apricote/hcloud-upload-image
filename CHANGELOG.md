@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.6.0](https://github.com/apricote/hcloud-upload-image/compare/v1.5.0...v1.6.0) (2026-11-09)
+
+
+### Features
+
+* **cli:** accept HCLOUD_ENDPOINT variable to configure the hcloud client ([#200](https://github.com/apricote/hcloud-upload-image/issues/200)) ([add1bce](https://github.com/apricote/hcloud-upload-image/commit/add1bceabce1bdea59cf5b6445320ca93fae40c8))
+* use rescue root password as alternative login ([#201](https://github.com/apricote/hcloud-upload-image/issues/201)) ([29c9af2](https://github.com/apricote/hcloud-upload-image/commit/29c9af2629856b399e60bb31c9497ba065b4b795))
+
 ## [1.5.0](https://github.com/apricote/hcloud-upload-image/compare/v1.4.0...v1.5.0) (2026-06-21)
 
 
